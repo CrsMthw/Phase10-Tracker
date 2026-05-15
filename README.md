@@ -10,6 +10,25 @@ Every Phase 10 score tracker app on the Play Store falls into one of a few categ
 
 ---
 
+## Screenshots
+
+<p float="left">
+  <img src="assets/screenshots/home.png" width="200" />
+  <img src="assets/screenshots/setup.png" width="200" />
+  <img src="assets/screenshots/game.png" width="200" />
+  <img src="assets/screenshots/game-detail.png" width="200" />
+</p>
+
+<p float="left">
+  <img src="assets/screenshots/entry.png" width="200" />
+  <img src="assets/screenshots/result.png" width="200" />
+  <img src="assets/screenshots/leaderboard.png" width="200" />
+</p>
+
+### Foldable / Tablet — Dual Pane
+
+<img src="assets/screenshots/game-unfolded.png" width="600" />
+
 ## Features
 
 ### Game Management
