@@ -84,7 +84,7 @@ Every Phase 10 score tracker app on the Play Store falls into one of a few categ
 
 Tapping this button on your Android device will open Obtainium and automatically add the repo — it'll notify you and install new releases automatically from then on.
 
-Or go to the [Releases](https://github.com/CrsMthw/Phase10-Tracker/releases) page and download the latest APK manually.
+Or go to the Releases page and download the latest APK manually.
 
 ---
 
