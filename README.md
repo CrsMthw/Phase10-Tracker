@@ -78,6 +78,16 @@ Every Phase 10 score tracker app on the Play Store falls into one of a few categ
 
 ---
 
+## Install
+
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="80">](http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/CrsMthw/Phase10-Tracker)
+
+Tapping this button on your Android device will open Obtainium and automatically add the repo — it'll notify you and install new releases automatically from then on.
+
+Or go to the [Releases](https://github.com/CrsMthw/Phase10-Tracker/releases) page and download the latest APK manually.
+
+---
+
 ## Building
 
 Requirements: Android Studio (latest stable), JDK 17+, Android SDK 37.
