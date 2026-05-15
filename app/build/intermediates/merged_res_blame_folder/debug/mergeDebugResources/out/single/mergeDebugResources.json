@@ -44,6 +44,10 @@
         "source": "com.crsmthw.phase10tracker.app-main-44:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
+        "merged": "com.crsmthw.phase10tracker.app-debug-42:/drawable_bmc_button.png.flat",
+        "source": "com.crsmthw.phase10tracker.app-main-44:/drawable/bmc_button.png"
+    },
+    {
         "merged": "com.crsmthw.phase10tracker.app-debug-42:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
         "source": "com.crsmthw.phase10tracker.app-main-44:/mipmap-xxxhdpi/ic_launcher_round.png"
     },

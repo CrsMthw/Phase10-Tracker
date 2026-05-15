@@ -1,4 +1,5 @@
 com.crsmthw.phase10tracker
+drawable bmc_button
 drawable ic_launcher_background
 drawable ic_launcher_foreground
 drawable ic_launcher_monochrome

@@ -26,7 +26,8 @@ fun HomeScreen(
     onStartNew: () -> Unit,
     onLeaderboard: () -> Unit,
     onManagePlayers: () -> Unit,
-    onCustomRules: () -> Unit
+    onCustomRules: () -> Unit,
+    onAbout: () -> Unit
 ) {
     val hasActiveGame by vm.hasActiveGame.collectAsState()
     val activeGameId  by vm.activeGameId.collectAsState()
@@ -58,11 +59,8 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = onManagePlayers) {
-                        Icon(Icons.Outlined.Group, contentDescription = "Manage Players")
-                    }
-                    IconButton(onClick = onLeaderboard) {
-                        Icon(Icons.Outlined.EmojiEvents, contentDescription = "Leaderboard")
+                    IconButton(onClick = onAbout) {
+                        Icon(Icons.Filled.Info, contentDescription = "About")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

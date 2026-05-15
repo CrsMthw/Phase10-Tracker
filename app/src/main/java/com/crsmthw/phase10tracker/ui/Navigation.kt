@@ -20,6 +20,7 @@ object Routes {
     const val GAME_RESULTS   = "results/{gameId}"
     const val LEADERBOARD    = "leaderboard"
     const val CUSTOM_RULES   = "custom_rules"
+    const val ABOUT          = "about"
 
     fun activeGame(id: Long)  = "game/$id"
     fun roundEntry(id: Long)  = "round/$id"
@@ -51,7 +52,8 @@ fun Phase10NavHost(navController: NavHostController) {
                 onStartNew     = { navController.navigate(Routes.GAME_SETUP) },
                 onLeaderboard  = { navController.navigate(Routes.LEADERBOARD) },
                 onManagePlayers = { navController.navigate(Routes.PLAYER_ROSTER) },
-                onCustomRules  = { navController.navigate(Routes.CUSTOM_RULES) }
+                onCustomRules  = { navController.navigate(Routes.CUSTOM_RULES) },
+                onAbout        = { navController.navigate(Routes.ABOUT) }
             )
         }
 
@@ -143,6 +145,10 @@ fun Phase10NavHost(navController: NavHostController) {
                 vm = vm,
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        composable(Routes.ABOUT) {
+            AboutScreen(onBack = { navController.popBackStack() })
         }
     }
 }
