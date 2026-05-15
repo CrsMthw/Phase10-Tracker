@@ -1,0 +1,2 @@
+-keep class com.crsmthw.phase10tracker.data.** { *; }
+-keepattributes *Annotation*

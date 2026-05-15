@@ -1,0 +1,7 @@
+com.crsmthw.phase10tracker.app-updated_navigation_xml-0 /home/cris/Documents/Phase10Tracker/app/build/generated/updated_navigation_xml/debug
+com.crsmthw.phase10tracker.app-packageDebugResources-1 /home/cris/Documents/Phase10Tracker/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.crsmthw.phase10tracker.app-packageDebugResources-2 /home/cris/Documents/Phase10Tracker/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.crsmthw.phase10tracker.app-debug-3 /home/cris/Documents/Phase10Tracker/app/build/intermediates/merged_res/debug/mergeDebugResources
+com.crsmthw.phase10tracker.app-debug-4 /home/cris/Documents/Phase10Tracker/app/src/debug/res
+com.crsmthw.phase10tracker.app-main-5 /home/cris/Documents/Phase10Tracker/app/src/main/res
+gradleHome-0 /home/cris/.gradle
