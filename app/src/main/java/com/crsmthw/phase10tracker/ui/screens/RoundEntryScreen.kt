@@ -61,23 +61,24 @@ fun RoundEntryScreen(
         },
         bottomBar = {
             Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
-                Button(
-                    onClick = {
-                        focusManager.clearFocus()
-                        vm.submitRound()
-                    },
-                    enabled = vm.isValid(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 16.dp, bottom = 16.dp)
-                        .navigationBarsPadding()
-                        .height(56.dp),
-                    shape = MaterialTheme.shapes.large
-                ) {
-                    Icon(Icons.Filled.Check, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Submit Round", style = MaterialTheme.typography.titleMedium)
+                Column(modifier = Modifier.navigationBarsPadding()) {
+                    Button(
+                        onClick = {
+                            focusManager.clearFocus()
+                            vm.submitRound()
+                        },
+                        enabled = vm.isValid(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(vertical = 16.dp)
+                            .height(56.dp),
+                        shape = MaterialTheme.shapes.large
+                    ) {
+                        Icon(Icons.Filled.Check, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Submit Round", style = MaterialTheme.typography.titleMedium)
+                    }
                 }
             }
         }
@@ -86,7 +87,11 @@ fun RoundEntryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                // This is the key fix: pushes content up when keyboard appears
+                // Tell Compose the Scaffold padding already consumed those insets,
+                // so imePadding() only adds the *extra* keyboard space — not the
+                // full keyboard height on top of the already-padded bottomBar height.
+                // Without this, the gap = bottomBar height (the double-count).
+                .consumeWindowInsets(padding)
                 .imePadding(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
