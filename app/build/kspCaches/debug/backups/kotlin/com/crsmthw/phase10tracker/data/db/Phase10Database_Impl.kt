@@ -43,24 +43,24 @@ public class Phase10Database_Impl : Phase10Database() {
     RoundDao_Impl(this)
   }
 
-  private val _customRuleSetDao: Lazy<CustomRuleSetDao> = lazy {
-    CustomRuleSetDao_Impl(this)
+  private val _customPhaseSetDao: Lazy<CustomPhaseSetDao> = lazy {
+    CustomPhaseSetDao_Impl(this)
   }
 
   protected override fun createOpenDelegate(): RoomOpenDelegate {
-    val _openDelegate: RoomOpenDelegate = object : RoomOpenDelegate(2, "be786709a45966a71ad994200bfac1b8", "51f981e3a9729a09288d6faabd6b815f") {
+    val _openDelegate: RoomOpenDelegate = object : RoomOpenDelegate(3, "bc3517b21292115f0cf175467ed1cdfd", "0ef263cff3e7a9428b68582d11d073fc") {
       public override fun createAllTables(connection: SQLiteConnection) {
         connection.execSQL("CREATE TABLE IF NOT EXISTS `players` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `gamesPlayed` INTEGER NOT NULL, `gamesWon` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)")
-        connection.execSQL("CREATE TABLE IF NOT EXISTS `games` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `startedAt` INTEGER NOT NULL, `finishedAt` INTEGER, `isComplete` INTEGER NOT NULL, `winnerId` INTEGER, `currentRound` INTEGER NOT NULL, `currentDealerIndex` INTEGER NOT NULL)")
+        connection.execSQL("CREATE TABLE IF NOT EXISTS `games` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `startedAt` INTEGER NOT NULL, `finishedAt` INTEGER, `isComplete` INTEGER NOT NULL, `winnerId` INTEGER, `currentRound` INTEGER NOT NULL, `currentDealerIndex` INTEGER NOT NULL, `phaseSetId` INTEGER NOT NULL)")
         connection.execSQL("CREATE TABLE IF NOT EXISTS `game_players` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gameId` INTEGER NOT NULL, `playerId` INTEGER NOT NULL, `playerName` TEXT NOT NULL, `turnOrder` INTEGER NOT NULL, `currentPhase` INTEGER NOT NULL, `totalScore` INTEGER NOT NULL, `isEliminated` INTEGER NOT NULL, FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`playerId`) REFERENCES `players`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_game_players_gameId` ON `game_players` (`gameId`)")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_game_players_playerId` ON `game_players` (`playerId`)")
         connection.execSQL("CREATE TABLE IF NOT EXISTS `rounds` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gameId` INTEGER NOT NULL, `gamePlayerId` INTEGER NOT NULL, `roundNumber` INTEGER NOT NULL, `score` INTEGER NOT NULL, `phaseCompleted` INTEGER NOT NULL, `phaseAtRoundStart` INTEGER NOT NULL, FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`gamePlayerId`) REFERENCES `game_players`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_rounds_gameId` ON `rounds` (`gameId`)")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_rounds_gamePlayerId` ON `rounds` (`gamePlayerId`)")
-        connection.execSQL("CREATE TABLE IF NOT EXISTS `custom_rule_sets` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `rulesJson` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)")
+        connection.execSQL("CREATE TABLE IF NOT EXISTS `custom_phase_sets` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `rulesJson` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)")
         connection.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)")
-        connection.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'be786709a45966a71ad994200bfac1b8')")
+        connection.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bc3517b21292115f0cf175467ed1cdfd')")
       }
 
       public override fun dropAllTables(connection: SQLiteConnection) {
@@ -68,7 +68,7 @@ public class Phase10Database_Impl : Phase10Database() {
         connection.execSQL("DROP TABLE IF EXISTS `games`")
         connection.execSQL("DROP TABLE IF EXISTS `game_players`")
         connection.execSQL("DROP TABLE IF EXISTS `rounds`")
-        connection.execSQL("DROP TABLE IF EXISTS `custom_rule_sets`")
+        connection.execSQL("DROP TABLE IF EXISTS `custom_phase_sets`")
       }
 
       public override fun onCreate(connection: SQLiteConnection) {
@@ -114,6 +114,7 @@ public class Phase10Database_Impl : Phase10Database() {
         _columnsGames.put("winnerId", TableInfo.Column("winnerId", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY))
         _columnsGames.put("currentRound", TableInfo.Column("currentRound", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
         _columnsGames.put("currentDealerIndex", TableInfo.Column("currentDealerIndex", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
+        _columnsGames.put("phaseSetId", TableInfo.Column("phaseSetId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
         val _foreignKeysGames: MutableSet<TableInfo.ForeignKey> = mutableSetOf()
         val _indicesGames: MutableSet<TableInfo.Index> = mutableSetOf()
         val _infoGames: TableInfo = TableInfo("games", _columnsGames, _foreignKeysGames, _indicesGames)
@@ -178,23 +179,23 @@ public class Phase10Database_Impl : Phase10Database() {
               | Found:
               |""".trimMargin() + _existingRounds)
         }
-        val _columnsCustomRuleSets: MutableMap<String, TableInfo.Column> = mutableMapOf()
-        _columnsCustomRuleSets.put("id", TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY))
-        _columnsCustomRuleSets.put("name", TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
-        _columnsCustomRuleSets.put("rulesJson", TableInfo.Column("rulesJson", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
-        _columnsCustomRuleSets.put("createdAt", TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
-        val _foreignKeysCustomRuleSets: MutableSet<TableInfo.ForeignKey> = mutableSetOf()
-        val _indicesCustomRuleSets: MutableSet<TableInfo.Index> = mutableSetOf()
-        val _infoCustomRuleSets: TableInfo = TableInfo("custom_rule_sets", _columnsCustomRuleSets, _foreignKeysCustomRuleSets, _indicesCustomRuleSets)
-        val _existingCustomRuleSets: TableInfo = read(connection, "custom_rule_sets")
-        if (!_infoCustomRuleSets.equals(_existingCustomRuleSets)) {
+        val _columnsCustomPhaseSets: MutableMap<String, TableInfo.Column> = mutableMapOf()
+        _columnsCustomPhaseSets.put("id", TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY))
+        _columnsCustomPhaseSets.put("name", TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
+        _columnsCustomPhaseSets.put("rulesJson", TableInfo.Column("rulesJson", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
+        _columnsCustomPhaseSets.put("createdAt", TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY))
+        val _foreignKeysCustomPhaseSets: MutableSet<TableInfo.ForeignKey> = mutableSetOf()
+        val _indicesCustomPhaseSets: MutableSet<TableInfo.Index> = mutableSetOf()
+        val _infoCustomPhaseSets: TableInfo = TableInfo("custom_phase_sets", _columnsCustomPhaseSets, _foreignKeysCustomPhaseSets, _indicesCustomPhaseSets)
+        val _existingCustomPhaseSets: TableInfo = read(connection, "custom_phase_sets")
+        if (!_infoCustomPhaseSets.equals(_existingCustomPhaseSets)) {
           return RoomOpenDelegate.ValidationResult(false, """
-              |custom_rule_sets(com.crsmthw.phase10tracker.data.model.CustomRuleSetEntity).
+              |custom_phase_sets(com.crsmthw.phase10tracker.data.model.CustomPhaseSetEntity).
               | Expected:
-              |""".trimMargin() + _infoCustomRuleSets + """
+              |""".trimMargin() + _infoCustomPhaseSets + """
               |
               | Found:
-              |""".trimMargin() + _existingCustomRuleSets)
+              |""".trimMargin() + _existingCustomPhaseSets)
         }
         return RoomOpenDelegate.ValidationResult(true, null)
       }
@@ -205,11 +206,11 @@ public class Phase10Database_Impl : Phase10Database() {
   protected override fun createInvalidationTracker(): InvalidationTracker {
     val _shadowTablesMap: MutableMap<String, String> = mutableMapOf()
     val _viewTables: MutableMap<String, Set<String>> = mutableMapOf()
-    return InvalidationTracker(this, _shadowTablesMap, _viewTables, "players", "games", "game_players", "rounds", "custom_rule_sets")
+    return InvalidationTracker(this, _shadowTablesMap, _viewTables, "players", "games", "game_players", "rounds", "custom_phase_sets")
   }
 
   public override fun clearAllTables() {
-    super.performClear(true, "players", "games", "game_players", "rounds", "custom_rule_sets")
+    super.performClear(true, "players", "games", "game_players", "rounds", "custom_phase_sets")
   }
 
   protected override fun getRequiredTypeConverterClasses(): Map<KClass<*>, List<KClass<*>>> {
@@ -218,7 +219,7 @@ public class Phase10Database_Impl : Phase10Database() {
     _typeConvertersMap.put(GameDao::class, GameDao_Impl.getRequiredConverters())
     _typeConvertersMap.put(GamePlayerDao::class, GamePlayerDao_Impl.getRequiredConverters())
     _typeConvertersMap.put(RoundDao::class, RoundDao_Impl.getRequiredConverters())
-    _typeConvertersMap.put(CustomRuleSetDao::class, CustomRuleSetDao_Impl.getRequiredConverters())
+    _typeConvertersMap.put(CustomPhaseSetDao::class, CustomPhaseSetDao_Impl.getRequiredConverters())
     return _typeConvertersMap
   }
 
@@ -240,5 +241,5 @@ public class Phase10Database_Impl : Phase10Database() {
 
   public override fun roundDao(): RoundDao = _roundDao.value
 
-  public override fun customRuleSetDao(): CustomRuleSetDao = _customRuleSetDao.value
+  public override fun customPhaseSetDao(): CustomPhaseSetDao = _customPhaseSetDao.value
 }

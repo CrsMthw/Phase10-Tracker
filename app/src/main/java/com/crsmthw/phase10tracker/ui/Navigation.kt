@@ -28,7 +28,10 @@ object Routes {
 }
 
 @Composable
-fun Phase10NavHost(navController: NavHostController) {
+fun Phase10NavHost(
+    navController: NavHostController,
+    themeVm: ThemeViewModel
+) {
     val context = LocalContext.current
     val db = remember { Phase10Database.getInstance(context) }
     val repo = remember {
@@ -37,7 +40,7 @@ fun Phase10NavHost(navController: NavHostController) {
             db.gameDao(),
             db.gamePlayerDao(),
             db.roundDao(),
-            db.customRuleSetDao()
+            db.customPhaseSetDao()
         )
     }
     val factory = remember { ViewModelFactory(repo) }
@@ -46,21 +49,27 @@ fun Phase10NavHost(navController: NavHostController) {
 
         composable(Routes.HOME) {
             val vm: HomeViewModel = viewModel(factory = factory)
+            val themeMode   by themeVm.themeMode.collectAsState()
+            val amoledBlack by themeVm.amoledBlack.collectAsState()
             HomeScreen(
-                vm = vm,
-                onContinueGame = { gameId -> navController.navigate(Routes.activeGame(gameId)) },
-                onStartNew     = { navController.navigate(Routes.GAME_SETUP) },
-                onLeaderboard  = { navController.navigate(Routes.LEADERBOARD) },
-                onManagePlayers = { navController.navigate(Routes.PLAYER_ROSTER) },
-                onCustomRules  = { navController.navigate(Routes.CUSTOM_RULES) },
-                onAbout        = { navController.navigate(Routes.ABOUT) }
+                vm                  = vm,
+                themeMode           = themeMode,
+                amoledBlack         = amoledBlack,
+                onThemeModeChange   = themeVm::setThemeMode,
+                onAmoledBlackChange = themeVm::setAmoledBlack,
+                onContinueGame      = { gameId -> navController.navigate(Routes.activeGame(gameId)) },
+                onStartNew          = { navController.navigate(Routes.GAME_SETUP) },
+                onLeaderboard       = { navController.navigate(Routes.LEADERBOARD) },
+                onManagePlayers     = { navController.navigate(Routes.PLAYER_ROSTER) },
+                onCustomRules       = { navController.navigate(Routes.CUSTOM_RULES) },
+                onAbout             = { navController.navigate(Routes.ABOUT) }
             )
         }
 
         composable(Routes.PLAYER_ROSTER) {
             val vm: PlayerRosterViewModel = viewModel(factory = factory)
             PlayerRosterScreen(
-                vm = vm,
+                vm     = vm,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -68,7 +77,7 @@ fun Phase10NavHost(navController: NavHostController) {
         composable(Routes.GAME_SETUP) {
             val vm: GameSetupViewModel = viewModel(factory = factory)
             GameSetupScreen(
-                vm = vm,
+                vm            = vm,
                 onGameStarted = { gameId ->
                     navController.navigate(Routes.activeGame(gameId)) {
                         popUpTo(Routes.HOME)
@@ -79,18 +88,20 @@ fun Phase10NavHost(navController: NavHostController) {
         }
 
         composable(
-            route = Routes.ACTIVE_GAME,
+            route     = Routes.ACTIVE_GAME,
             arguments = listOf(navArgument("gameId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val gameId = backStackEntry.arguments!!.getLong("gameId")
+            val gameId      = backStackEntry.arguments!!.getLong("gameId")
             val gameFactory = remember { ViewModelFactory(repo, gameId) }
             val vm: ActiveGameViewModel = viewModel(factory = gameFactory)
             ActiveGameScreen(
-                vm = vm,
-                onEnterRound = { navController.navigate(Routes.roundEntry(gameId)) },
-                onGameEnd    = { navController.navigate(Routes.gameResults(gameId)) {
-                    popUpTo(Routes.HOME)
-                }},
+                vm              = vm,
+                onEnterRound    = { navController.navigate(Routes.roundEntry(gameId)) },
+                onGameEnd       = {
+                    navController.navigate(Routes.gameResults(gameId)) {
+                        popUpTo(Routes.HOME)
+                    }
+                },
                 onGameCancelled = {
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
@@ -101,28 +112,28 @@ fun Phase10NavHost(navController: NavHostController) {
         }
 
         composable(
-            route = Routes.ROUND_ENTRY,
+            route     = Routes.ROUND_ENTRY,
             arguments = listOf(navArgument("gameId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val gameId = backStackEntry.arguments!!.getLong("gameId")
+            val gameId      = backStackEntry.arguments!!.getLong("gameId")
             val gameFactory = remember { ViewModelFactory(repo, gameId) }
             val vm: RoundEntryViewModel = viewModel(factory = gameFactory)
             RoundEntryScreen(
-                vm = vm,
+                vm               = vm,
                 onRoundSubmitted = { navController.popBackStack() },
-                onBack = { navController.popBackStack() }
+                onBack           = { navController.popBackStack() }
             )
         }
 
         composable(
-            route = Routes.GAME_RESULTS,
+            route     = Routes.GAME_RESULTS,
             arguments = listOf(navArgument("gameId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val gameId = backStackEntry.arguments!!.getLong("gameId")
+            val gameId      = backStackEntry.arguments!!.getLong("gameId")
             val gameFactory = remember { ViewModelFactory(repo, gameId) }
             val vm: GameResultsViewModel = viewModel(factory = gameFactory)
             GameResultsScreen(
-                vm = vm,
+                vm     = vm,
                 onHome = {
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
@@ -134,15 +145,15 @@ fun Phase10NavHost(navController: NavHostController) {
         composable(Routes.LEADERBOARD) {
             val vm: LeaderboardViewModel = viewModel(factory = factory)
             LeaderboardScreen(
-                vm = vm,
+                vm     = vm,
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Routes.CUSTOM_RULES) {
-            val vm: CustomRulesViewModel = viewModel(factory = factory)
-            CustomRulesScreen(
-                vm = vm,
+            val vm: CustomPhasesViewModel = viewModel(factory = factory)
+            CustomPhasesScreen(
+                vm     = vm,
                 onBack = { navController.popBackStack() }
             )
         }

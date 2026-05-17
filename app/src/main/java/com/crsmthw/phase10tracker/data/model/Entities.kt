@@ -24,9 +24,11 @@ data class GameEntity(
     val startedAt: Long = System.currentTimeMillis(),
     val finishedAt: Long? = null,
     val isComplete: Boolean = false,
-    val winnerId: Long? = null,   // references PlayerEntity.id
+    val winnerId: Long? = null,         // references PlayerEntity.id
     val currentRound: Int = 1,
-    val currentDealerIndex: Int = 0  // index into the ordered player list
+    val currentDealerIndex: Int = 0,    // index into the ordered player list
+    // -1 = Official Phases, -2..-15 = preset index, positive = custom phase set DB id
+    val phaseSetId: Long = -1L
 )
 
 // ── Per-player state within a game ──────────────────────────────────────────
@@ -60,10 +62,10 @@ data class GamePlayerEntity(
     val isEliminated: Boolean = false  // completed Phase 10 — still tracked
 )
 
-// ── Custom rule sets ─────────────────────────────────────────────────────────
+// ── Custom phase sets ────────────────────────────────────────────────────────
 
-@Entity(tableName = "custom_rule_sets")
-data class CustomRuleSetEntity(
+@Entity(tableName = "custom_phase_sets")
+data class CustomPhaseSetEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val rulesJson: String,  // JSON array of PhaseRule serialized

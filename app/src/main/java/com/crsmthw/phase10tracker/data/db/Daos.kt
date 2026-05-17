@@ -89,18 +89,22 @@ interface GamePlayerDao {
     suspend fun getGamePlayerById(id: Long): GamePlayerEntity?
 }
 
-// ── CustomRuleSet DAO ─────────────────────────────────────────────────────────
+// ── CustomPhaseSet DAO ───────────────────────────────────────────────────────
 
 @Dao
-interface CustomRuleSetDao {
-    @Query("SELECT * FROM custom_rule_sets ORDER BY createdAt DESC")
-    fun getAllRuleSets(): Flow<List<CustomRuleSetEntity>>
+interface CustomPhaseSetDao {
+
+    @Query("SELECT * FROM custom_phase_sets ORDER BY createdAt DESC")
+    fun getAllPhaseSets(): Flow<List<CustomPhaseSetEntity>>
+
+    @Query("SELECT * FROM custom_phase_sets WHERE id = :id")
+    suspend fun getPhaseSetById(id: Long): CustomPhaseSetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertRuleSet(ruleSet: CustomRuleSetEntity): Long
+    suspend fun insertPhaseSet(phaseSet: CustomPhaseSetEntity): Long
 
     @Delete
-    suspend fun deleteRuleSet(ruleSet: CustomRuleSetEntity)
+    suspend fun deletePhaseSet(phaseSet: CustomPhaseSetEntity)
 }
 
 @Dao

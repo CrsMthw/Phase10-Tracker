@@ -22,8 +22,8 @@ data class RoundEntry(
     val autoCompleted: Boolean = false   // true when score was auto-inferred < threshold
 )
 
-// Custom rule set UI model
-data class CustomRuleSet(
+// Custom phase set UI model
+data class CustomPhaseSet(
     val id: Long,
     val name: String,
     val phases: List<PhaseRule>

@@ -31,8 +31,9 @@ fun GameSetupScreen(
     val allPlayers      by vm.allPlayers.collectAsState()
     val selectedPlayers by vm.selectedPlayers.collectAsState()
     val newGameId       by vm.newGameId.collectAsState()
-    val customRuleSets  by vm.customRuleSets.collectAsState()
-    val selectedRuleSet by vm.selectedRuleSet.collectAsState()
+    val customPhaseSets  by vm.customPhaseSets.collectAsState()
+    val selectedPhaseSet by vm.selectedPhaseSet.collectAsState()
+    val presetPhaseSets = vm.presetPhaseSets
     var showAddDialog    by remember { mutableStateOf(false) }
     var showRuleDropdown by remember { mutableStateOf(false) }
     val hapticFeedback  = LocalHapticFeedback.current
@@ -113,22 +114,37 @@ fun GameSetupScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ── Rules selector ───────────────────────────────────────────────
+            // ── Phase set selector ───────────────────────────────────────────
             item(key = "rules_header") {
-                Text(
-                    "Rules",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Phase",
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    // Random phase-set picker
+                    FilledTonalIconButton(
+                        onClick = { vm.selectRandomPhaseSet() },
+                    ) {
+                        Icon(
+                            Icons.Filled.Casino,
+                            contentDescription = "Pick random phase set"
+                        )
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
                 ExposedDropdownMenuBox(
                     expanded = showRuleDropdown,
                     onExpandedChange = { showRuleDropdown = it }
                 ) {
                     OutlinedTextField(
-                        value = selectedRuleSet?.name ?: "Official Rules",
+                        value = selectedPhaseSet?.name ?: "Official Phases",
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Phase rules") },
+                        label = { Text("Phase set") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showRuleDropdown) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -139,19 +155,61 @@ fun GameSetupScreen(
                         expanded = showRuleDropdown,
                         onDismissRequest = { showRuleDropdown = false }
                     ) {
+                        // ── Official ─────────────────────────────────────────
                         DropdownMenuItem(
-                            text = { Text("Official Rules") },
-                            onClick = { vm.selectRuleSet(null); showRuleDropdown = false },
-                            leadingIcon = { if (selectedRuleSet == null) Icon(Icons.Filled.Check, null) }
+                            text = { Text("Official Phases") },
+                            onClick = { vm.selectPhaseSet(null); showRuleDropdown = false },
+                            leadingIcon = {
+                                if (selectedPhaseSet == null) Icon(Icons.Filled.Check, null)
+                            }
                         )
-                        customRuleSets.forEach { ruleSet ->
+
+                        // ── Presets ──────────────────────────────────────────
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "— Presets —",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            onClick = {},
+                            enabled = false
+                        )
+                        presetPhaseSets.forEach { ruleSet ->
                             DropdownMenuItem(
                                 text = { Text(ruleSet.name) },
-                                onClick = { vm.selectRuleSet(ruleSet); showRuleDropdown = false },
+                                onClick = { vm.selectPhaseSet(ruleSet); showRuleDropdown = false },
                                 leadingIcon = {
-                                    if (selectedRuleSet?.id == ruleSet.id) Icon(Icons.Filled.Check, null)
+                                    if (selectedPhaseSet?.id == ruleSet.id) Icon(Icons.Filled.Check, null)
                                 }
                             )
+                        }
+
+                        // ── User custom ──────────────────────────────────────
+                        if (customPhaseSets.isNotEmpty()) {
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "— Custom —",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                onClick = {},
+                                enabled = false
+                            )
+                            customPhaseSets.forEach { ruleSet ->
+                                DropdownMenuItem(
+                                    text = { Text(ruleSet.name) },
+                                    onClick = { vm.selectPhaseSet(ruleSet); showRuleDropdown = false },
+                                    leadingIcon = {
+                                        if (selectedPhaseSet?.id == ruleSet.id) Icon(Icons.Filled.Check, null)
+                                    }
+                                )
+                            }
                         }
                     }
                 }

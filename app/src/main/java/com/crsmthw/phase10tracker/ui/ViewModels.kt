@@ -3,6 +3,8 @@ package com.crsmthw.phase10tracker.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.crsmthw.phase10tracker.data.ThemeMode
+import com.crsmthw.phase10tracker.data.ThemePreferenceManager
 import com.crsmthw.phase10tracker.data.model.*
 import com.crsmthw.phase10tracker.data.repository.GameRepository
 import kotlinx.coroutines.flow.*
@@ -12,8 +14,6 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(private val repo: GameRepository) : ViewModel() {
 
-    // Observes the DB directly — updates instantly when game state changes
-    // (new game started, game ended, navigating back from active game etc.)
     private val _activeGame: StateFlow<GameEntity?> = repo.observeActiveGame()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -50,17 +50,28 @@ class GameSetupViewModel(private val repo: GameRepository) : ViewModel() {
     val allPlayers: StateFlow<List<PlayerEntity>> = repo.getAllPlayers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val customRuleSets: StateFlow<List<CustomRuleSet>> = repo.getAllCustomRuleSets()
+    val customPhaseSets: StateFlow<List<CustomPhaseSet>> = repo.getAllCustomPhaseSets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Built-in preset sets — negative IDs so they never clash with DB rows. */
+    val presetPhaseSets: List<CustomPhaseSet> = PRESET_PHASE_SETS.mapIndexed { i, p ->
+        CustomPhaseSet(id = -(i + 2).toLong(), name = p.name, phases = p.phases)
+    }
 
     private val _selectedPlayers = MutableStateFlow<List<PlayerEntity>>(emptyList())
     val selectedPlayers: StateFlow<List<PlayerEntity>> = _selectedPlayers
 
-    private val _selectedRuleSet = MutableStateFlow<CustomRuleSet?>(null)
-    val selectedRuleSet: StateFlow<CustomRuleSet?> = _selectedRuleSet
+    private val _selectedPhaseSet = MutableStateFlow<CustomPhaseSet?>(null)
+    val selectedPhaseSet: StateFlow<CustomPhaseSet?> = _selectedPhaseSet
 
-    fun selectRuleSet(ruleSet: CustomRuleSet?) {
-        _selectedRuleSet.value = ruleSet
+    fun selectPhaseSet(phaseSet: CustomPhaseSet?) {
+        _selectedPhaseSet.value = phaseSet
+    }
+
+    /** Picks a random phase set from official + all 14 presets + any user-created sets. */
+    fun selectRandomPhaseSet() {
+        val all: List<CustomPhaseSet?> = listOf(null) + presetPhaseSets + customPhaseSets.value
+        _selectedPhaseSet.value = all.random()
     }
 
     fun togglePlayer(player: PlayerEntity) {
@@ -82,7 +93,6 @@ class GameSetupViewModel(private val repo: GameRepository) : ViewModel() {
     fun addAndSelectNewPlayer(name: String) {
         viewModelScope.launch {
             val id = repo.addPlayer(name)
-            // The allPlayers flow will update; we'll add it to selected via a new query
             val updatedPlayers = repo.getAllPlayers().first()
             val newPlayer = updatedPlayers.find { it.id == id } ?: return@launch
             _selectedPlayers.value = _selectedPlayers.value + newPlayer
@@ -95,8 +105,9 @@ class GameSetupViewModel(private val repo: GameRepository) : ViewModel() {
     fun startGame() {
         val players = _selectedPlayers.value
         if (players.size < 2) return
+        val phaseSetId = _selectedPhaseSet.value?.id ?: -1L
         viewModelScope.launch {
-            val id = repo.startNewGame(players)
+            val id = repo.startNewGame(players, phaseSetId)
             _newGameId.value = id
         }
     }
@@ -117,6 +128,11 @@ class ActiveGameViewModel(
         repo.getGameById(gameId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    /** Resolves the correct phase rules for this game from its stored phaseSetId. */
+    val phaseRules: StateFlow<List<PhaseRule>> = gameState
+        .map { game -> repo.resolvePhaseRules(game?.phaseSetId ?: -1L) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), OFFICIAL_PHASE_RULES)
+
     private val _gameFinished = MutableStateFlow(false)
     val gameFinished: StateFlow<Boolean> = _gameFinished
 
@@ -126,7 +142,6 @@ class ActiveGameViewModel(
     init {
         viewModelScope.launch {
             gameState.collect { game ->
-                // Only trigger gameFinished if we haven't already cancelled
                 if (game?.isComplete == true && !_gameCancelled.value) {
                     _gameFinished.value = true
                 }
@@ -139,8 +154,6 @@ class ActiveGameViewModel(
             val players = boardState.value
             val anyScoreAboveZero = players.any { it.totalScore > 0 }
             if (!anyScoreAboveZero) {
-                // Set cancelled flag FIRST before DB write, so the gameState
-                // collector above won't fire gameFinished when isComplete flips
                 _gameCancelled.value = true
                 repo.cancelGame(gameId)
             } else {
@@ -165,6 +178,11 @@ class RoundEntryViewModel(
         repo.getGameById(gameId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    /** Resolves the correct phase rules for this game from its stored phaseSetId. */
+    val phaseRules: StateFlow<List<PhaseRule>> = gameState
+        .map { game -> repo.resolvePhaseRules(game?.phaseSetId ?: -1L) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), OFFICIAL_PHASE_RULES)
+
     init {
         viewModelScope.launch {
             repo.getGamePlayers(gameId).collect { gamePlayers ->
@@ -185,13 +203,6 @@ class RoundEntryViewModel(
         _entries.value = _entries.value.map { entry ->
             if (entry.gamePlayerId != gamePlayerId) return@map entry
             val scoreInt = score.trim().toIntOrNull()
-            // Auto-complete only when score is non-empty AND definitively < 50.
-            // If the user typed "6", that could become "60", "65" etc — don't auto-complete yet.
-            // We consider a score "definitive" only if it's 0, OR if adding another digit
-            // cannot bring it under 50 (i.e. it already has 2+ digits and is < 50,
-            // or it is exactly 0).
-            // Simplest safe rule: auto-complete only if score has >= 2 digits and < 50,
-            // OR score is exactly 0 (went out).
             val autoComplete = scoreInt != null && (
                 scoreInt == 0 || (score.trim().length >= 2 && scoreInt < PHASE_COMPLETE_THRESHOLD)
             )
@@ -206,7 +217,6 @@ class RoundEntryViewModel(
     fun togglePhaseCompleted(gamePlayerId: Long) {
         _entries.value = _entries.value.map { entry ->
             if (entry.gamePlayerId != gamePlayerId) return@map entry
-            // Only allow manual toggle if not auto-completed
             if (entry.autoCompleted) return@map entry
             entry.copy(phaseCompleted = !entry.phaseCompleted)
         }
@@ -252,20 +262,51 @@ class LeaderboardViewModel(private val repo: GameRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }
 
-// ── Custom Rules ViewModel ────────────────────────────────────────────────────
+// ── Custom Phases ViewModel ───────────────────────────────────────────────────
 
-class CustomRulesViewModel(private val repo: GameRepository) : ViewModel() {
+class CustomPhasesViewModel(private val repo: GameRepository) : ViewModel() {
 
-    val customRuleSets: StateFlow<List<CustomRuleSet>> = repo.getAllCustomRuleSets()
+    val customPhaseSets: StateFlow<List<CustomPhaseSet>> = repo.getAllCustomPhaseSets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun saveRuleSet(name: String, phases: List<PhaseRule>) {
+    fun savePhaseSet(name: String, phases: List<PhaseRule>) {
         if (name.isBlank() || phases.isEmpty()) return
-        viewModelScope.launch { repo.saveCustomRuleSet(name, phases) }
+        viewModelScope.launch { repo.saveCustomPhaseSet(name, phases) }
     }
 
-    fun deleteRuleSet(ruleSet: CustomRuleSet) {
-        viewModelScope.launch { repo.deleteCustomRuleSet(ruleSet) }
+    fun deletePhaseSet(phaseSet: CustomPhaseSet) {
+        viewModelScope.launch { repo.deleteCustomPhaseSet(phaseSet) }
+    }
+}
+
+// ── Theme ViewModel ───────────────────────────────────────────────────────────
+
+class ThemeViewModel(private val themePrefs: ThemePreferenceManager) : ViewModel() {
+
+    val themeMode: StateFlow<ThemeMode> = themePrefs.themeMode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemeMode.SYSTEM)
+
+    val amoledBlack: StateFlow<Boolean> = themePrefs.amoledBlack
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { themePrefs.setThemeMode(mode) }
+    }
+
+    fun setAmoledBlack(enabled: Boolean) {
+        viewModelScope.launch { themePrefs.setAmoledBlack(enabled) }
+    }
+}
+
+class ThemeViewModelFactory(
+    private val themePrefs: ThemePreferenceManager
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ThemeViewModel::class.java)) {
+            return ThemeViewModel(themePrefs) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
     }
 }
 
@@ -278,14 +319,14 @@ class ViewModelFactory(
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T = when {
-        modelClass.isAssignableFrom(HomeViewModel::class.java)         -> HomeViewModel(repo) as T
-        modelClass.isAssignableFrom(PlayerRosterViewModel::class.java) -> PlayerRosterViewModel(repo) as T
-        modelClass.isAssignableFrom(GameSetupViewModel::class.java)    -> GameSetupViewModel(repo) as T
-        modelClass.isAssignableFrom(ActiveGameViewModel::class.java)   -> ActiveGameViewModel(repo, gameId) as T
-        modelClass.isAssignableFrom(RoundEntryViewModel::class.java)   -> RoundEntryViewModel(repo, gameId) as T
-        modelClass.isAssignableFrom(GameResultsViewModel::class.java)  -> GameResultsViewModel(repo, gameId) as T
-        modelClass.isAssignableFrom(LeaderboardViewModel::class.java)  -> LeaderboardViewModel(repo) as T
-        modelClass.isAssignableFrom(CustomRulesViewModel::class.java)  -> CustomRulesViewModel(repo) as T
+        modelClass.isAssignableFrom(HomeViewModel::class.java)          -> HomeViewModel(repo) as T
+        modelClass.isAssignableFrom(PlayerRosterViewModel::class.java)  -> PlayerRosterViewModel(repo) as T
+        modelClass.isAssignableFrom(GameSetupViewModel::class.java)     -> GameSetupViewModel(repo) as T
+        modelClass.isAssignableFrom(ActiveGameViewModel::class.java)    -> ActiveGameViewModel(repo, gameId) as T
+        modelClass.isAssignableFrom(RoundEntryViewModel::class.java)    -> RoundEntryViewModel(repo, gameId) as T
+        modelClass.isAssignableFrom(GameResultsViewModel::class.java)   -> GameResultsViewModel(repo, gameId) as T
+        modelClass.isAssignableFrom(LeaderboardViewModel::class.java)   -> LeaderboardViewModel(repo) as T
+        modelClass.isAssignableFrom(CustomPhasesViewModel::class.java)  -> CustomPhasesViewModel(repo) as T
         else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
     }
 }

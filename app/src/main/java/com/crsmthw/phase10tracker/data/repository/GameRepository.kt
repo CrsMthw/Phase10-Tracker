@@ -9,7 +9,7 @@ class GameRepository(
     private val gameDao: GameDao,
     private val gamePlayerDao: GamePlayerDao,
     private val roundDao: RoundDao,
-    private val customRuleSetDao: CustomRuleSetDao
+    private val customPhaseSetDao: CustomPhaseSetDao
 ) {
 
     // ── Players ──────────────────────────────────────────────────────────────
@@ -30,10 +30,13 @@ class GameRepository(
 
     // ── Start Game ───────────────────────────────────────────────────────────
 
-    suspend fun startNewGame(orderedPlayers: List<PlayerEntity>): Long {
+    suspend fun startNewGame(
+        orderedPlayers: List<PlayerEntity>,
+        phaseSetId: Long = -1L
+    ): Long {
         // Wipe any lingering incomplete games before starting fresh
         gameDao.cancelAllIncompleteGames()
-        val gameId = gameDao.insertGame(GameEntity())
+        val gameId = gameDao.insertGame(GameEntity(phaseSetId = phaseSetId))
         val gamePlayers = orderedPlayers.mapIndexed { index, player ->
             GamePlayerEntity(
                 gameId = gameId,
@@ -46,6 +49,25 @@ class GameRepository(
         }
         gamePlayerDao.insertGamePlayers(gamePlayers)
         return gameId
+    }
+
+    // ── Phase Rules Resolution ───────────────────────────────────────────────
+    // Resolves the correct List<PhaseRule> from the ID stored on the game:
+    //   -1       → Official Phases
+    //   -2..-15  → Preset at index = abs(id) - 2
+    //   positive → User-created custom phase set from DB
+
+    suspend fun resolvePhaseRules(phaseSetId: Long): List<PhaseRule> = when {
+        phaseSetId == -1L -> OFFICIAL_PHASE_RULES
+        phaseSetId < -1L  -> {
+            val presetIndex = (-phaseSetId - 2).toInt()
+            PRESET_PHASE_SETS.getOrNull(presetIndex)?.phases ?: OFFICIAL_PHASE_RULES
+        }
+        else -> {
+            customPhaseSetDao.getPhaseSetById(phaseSetId)
+                ?.let { parseRulesJson(it.rulesJson) }
+                ?: OFFICIAL_PHASE_RULES
+        }
     }
 
     // ── Live Game State ──────────────────────────────────────────────────────
@@ -84,7 +106,6 @@ class GameRepository(
         val game = gameDao.getActiveGame() ?: return
         val gamePlayers = gamePlayerDao.getGamePlayersList(gameId)
 
-        // Build round records + update player state
         val rounds = entries.mapNotNull { entry ->
             val gp = gamePlayers.find { it.id == entry.gamePlayerId } ?: return@mapNotNull null
             val score = entry.scoreInput.trim().toIntOrNull() ?: 0
@@ -93,12 +114,8 @@ class GameRepository(
                            else gp.currentPhase
             val newScore = gp.totalScore + score
 
-            // Update the game player
             gamePlayerDao.updateGamePlayer(
-                gp.copy(
-                    currentPhase = newPhase,
-                    totalScore = newScore
-                )
+                gp.copy(currentPhase = newPhase, totalScore = newScore)
             )
 
             RoundEntity(
@@ -112,7 +129,6 @@ class GameRepository(
         }
         roundDao.insertRounds(rounds)
 
-        // Advance round & dealer
         val playerCount = gamePlayers.size
         val nextDealerIndex = (game.currentDealerIndex + 1) % playerCount
         gameDao.advanceRound(
@@ -121,14 +137,11 @@ class GameRepository(
             dealerIndex = nextDealerIndex
         )
 
-        // Check win condition — someone advanced past phase 10
         val updatedPlayers = gamePlayerDao.getGamePlayersList(gameId)
         val finishers = updatedPlayers.filter { it.currentPhase > 10 }
         if (finishers.isNotEmpty()) {
-            // Highest phase first (all should be > 10 here), then lowest score
             val winnerScore = finishers.minOf { it.totalScore }
             val winners = finishers.filter { it.totalScore == winnerScore }
-            // Use first winner for DB (tied winners both get stats updated)
             endGame(gameId, winners.map { it.playerId })
         }
     }
@@ -141,7 +154,6 @@ class GameRepository(
         val resolvedWinnerIds: List<Long> = if (winnerIds != null) {
             winnerIds
         } else {
-            // Early end: highest phase wins, then lowest score, then tie
             val highestPhase = gamePlayers.maxOf { it.currentPhase }
             val topPlayers = gamePlayers.filter { it.currentPhase == highestPhase }
             val lowestScore = topPlayers.minOf { it.totalScore }
@@ -150,10 +162,7 @@ class GameRepository(
 
         if (resolvedWinnerIds.isEmpty()) return
 
-        // Store first winner in game record (UI will show all tied winners)
         gameDao.finishGame(gameId, resolvedWinnerIds.first())
-
-        // Update lifetime stats for all players and all winners
         val playerIds = gamePlayers.map { it.playerId }
         playerDao.incrementGamesPlayed(playerIds)
         resolvedWinnerIds.forEach { playerDao.incrementGamesWon(it) }
@@ -163,12 +172,6 @@ class GameRepository(
 
     suspend fun getGameResults(gameId: Long): List<GameResult> {
         val gamePlayers = gamePlayerDao.getGamePlayersList(gameId)
-
-        // Get winner IDs from the finished game record
-        val finishedGame = gameDao.getGameById(gameId).firstOrNull()
-        val primaryWinnerId = finishedGame?.winnerId
-
-        // Determine all tied winners: same highest phase + same lowest score
         val highestPhase = gamePlayers.maxOf { it.currentPhase }
         val topPlayers = gamePlayers.filter { it.currentPhase == highestPhase }
         val lowestScore = topPlayers.minOf { it.totalScore }
@@ -177,7 +180,6 @@ class GameRepository(
             .map { it.playerId }
             .toSet()
 
-        // Sort: highest phase first, then lowest score (ascending)
         return gamePlayers
             .sortedWith(compareByDescending<GamePlayerEntity> { it.currentPhase }
                 .thenBy { it.totalScore })
@@ -210,16 +212,15 @@ class GameRepository(
     // ── Cancel game (no winner, no stats update) ─────────────────────────────
 
     suspend fun cancelGame(gameId: Long) {
-        // Mark as complete but with no winner — no stats updated
         gameDao.finishGame(gameId, winnerId = -1L)
     }
 
-    // ── Custom Rule Sets ──────────────────────────────────────────────────────
+    // ── Custom Phase Sets ──────────────────────────────────────────────────────
 
-    fun getAllCustomRuleSets(): Flow<List<CustomRuleSet>> =
-        customRuleSetDao.getAllRuleSets().map { entities ->
+    fun getAllCustomPhaseSets(): Flow<List<CustomPhaseSet>> =
+        customPhaseSetDao.getAllPhaseSets().map { entities ->
             entities.map { entity ->
-                CustomRuleSet(
+                CustomPhaseSet(
                     id = entity.id,
                     name = entity.name,
                     phases = parseRulesJson(entity.rulesJson)
@@ -227,16 +228,16 @@ class GameRepository(
             }
         }
 
-    suspend fun saveCustomRuleSet(name: String, phases: List<PhaseRule>): Long {
+    suspend fun saveCustomPhaseSet(name: String, phases: List<PhaseRule>): Long {
         val json = buildRulesJson(phases)
-        return customRuleSetDao.insertRuleSet(
-            CustomRuleSetEntity(name = name.trim(), rulesJson = json)
+        return customPhaseSetDao.insertPhaseSet(
+            CustomPhaseSetEntity(name = name.trim(), rulesJson = json)
         )
     }
 
-    suspend fun deleteCustomRuleSet(ruleSet: CustomRuleSet) {
-        customRuleSetDao.deleteRuleSet(
-            CustomRuleSetEntity(id = ruleSet.id, name = ruleSet.name, rulesJson = "")
+    suspend fun deleteCustomPhaseSet(phaseSet: CustomPhaseSet) {
+        customPhaseSetDao.deletePhaseSet(
+            CustomPhaseSetEntity(id = phaseSet.id, name = phaseSet.name, rulesJson = "")
         )
     }
 

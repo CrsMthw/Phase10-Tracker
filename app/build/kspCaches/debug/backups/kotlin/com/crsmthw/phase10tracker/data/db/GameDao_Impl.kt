@@ -32,7 +32,7 @@ public class GameDao_Impl(
   init {
     this.__db = __db
     this.__insertAdapterOfGameEntity = object : EntityInsertAdapter<GameEntity>() {
-      protected override fun createQuery(): String = "INSERT OR REPLACE INTO `games` (`id`,`startedAt`,`finishedAt`,`isComplete`,`winnerId`,`currentRound`,`currentDealerIndex`) VALUES (nullif(?, 0),?,?,?,?,?,?)"
+      protected override fun createQuery(): String = "INSERT OR REPLACE INTO `games` (`id`,`startedAt`,`finishedAt`,`isComplete`,`winnerId`,`currentRound`,`currentDealerIndex`,`phaseSetId`) VALUES (nullif(?, 0),?,?,?,?,?,?,?)"
 
       protected override fun bind(statement: SQLiteStatement, entity: GameEntity) {
         statement.bindLong(1, entity.id)
@@ -53,10 +53,11 @@ public class GameDao_Impl(
         }
         statement.bindLong(6, entity.currentRound.toLong())
         statement.bindLong(7, entity.currentDealerIndex.toLong())
+        statement.bindLong(8, entity.phaseSetId)
       }
     }
     this.__updateAdapterOfGameEntity = object : EntityDeleteOrUpdateAdapter<GameEntity>() {
-      protected override fun createQuery(): String = "UPDATE OR ABORT `games` SET `id` = ?,`startedAt` = ?,`finishedAt` = ?,`isComplete` = ?,`winnerId` = ?,`currentRound` = ?,`currentDealerIndex` = ? WHERE `id` = ?"
+      protected override fun createQuery(): String = "UPDATE OR ABORT `games` SET `id` = ?,`startedAt` = ?,`finishedAt` = ?,`isComplete` = ?,`winnerId` = ?,`currentRound` = ?,`currentDealerIndex` = ?,`phaseSetId` = ? WHERE `id` = ?"
 
       protected override fun bind(statement: SQLiteStatement, entity: GameEntity) {
         statement.bindLong(1, entity.id)
@@ -77,7 +78,8 @@ public class GameDao_Impl(
         }
         statement.bindLong(6, entity.currentRound.toLong())
         statement.bindLong(7, entity.currentDealerIndex.toLong())
-        statement.bindLong(8, entity.id)
+        statement.bindLong(8, entity.phaseSetId)
+        statement.bindLong(9, entity.id)
       }
     }
   }
@@ -103,6 +105,7 @@ public class GameDao_Impl(
         val _columnIndexOfWinnerId: Int = getColumnIndexOrThrow(_stmt, "winnerId")
         val _columnIndexOfCurrentRound: Int = getColumnIndexOrThrow(_stmt, "currentRound")
         val _columnIndexOfCurrentDealerIndex: Int = getColumnIndexOrThrow(_stmt, "currentDealerIndex")
+        val _columnIndexOfPhaseSetId: Int = getColumnIndexOrThrow(_stmt, "phaseSetId")
         val _result: GameEntity?
         if (_stmt.step()) {
           val _tmpId: Long
@@ -129,7 +132,9 @@ public class GameDao_Impl(
           _tmpCurrentRound = _stmt.getLong(_columnIndexOfCurrentRound).toInt()
           val _tmpCurrentDealerIndex: Int
           _tmpCurrentDealerIndex = _stmt.getLong(_columnIndexOfCurrentDealerIndex).toInt()
-          _result = GameEntity(_tmpId,_tmpStartedAt,_tmpFinishedAt,_tmpIsComplete,_tmpWinnerId,_tmpCurrentRound,_tmpCurrentDealerIndex)
+          val _tmpPhaseSetId: Long
+          _tmpPhaseSetId = _stmt.getLong(_columnIndexOfPhaseSetId)
+          _result = GameEntity(_tmpId,_tmpStartedAt,_tmpFinishedAt,_tmpIsComplete,_tmpWinnerId,_tmpCurrentRound,_tmpCurrentDealerIndex,_tmpPhaseSetId)
         } else {
           _result = null
         }
@@ -152,6 +157,7 @@ public class GameDao_Impl(
         val _columnIndexOfWinnerId: Int = getColumnIndexOrThrow(_stmt, "winnerId")
         val _columnIndexOfCurrentRound: Int = getColumnIndexOrThrow(_stmt, "currentRound")
         val _columnIndexOfCurrentDealerIndex: Int = getColumnIndexOrThrow(_stmt, "currentDealerIndex")
+        val _columnIndexOfPhaseSetId: Int = getColumnIndexOrThrow(_stmt, "phaseSetId")
         val _result: GameEntity?
         if (_stmt.step()) {
           val _tmpId: Long
@@ -178,7 +184,9 @@ public class GameDao_Impl(
           _tmpCurrentRound = _stmt.getLong(_columnIndexOfCurrentRound).toInt()
           val _tmpCurrentDealerIndex: Int
           _tmpCurrentDealerIndex = _stmt.getLong(_columnIndexOfCurrentDealerIndex).toInt()
-          _result = GameEntity(_tmpId,_tmpStartedAt,_tmpFinishedAt,_tmpIsComplete,_tmpWinnerId,_tmpCurrentRound,_tmpCurrentDealerIndex)
+          val _tmpPhaseSetId: Long
+          _tmpPhaseSetId = _stmt.getLong(_columnIndexOfPhaseSetId)
+          _result = GameEntity(_tmpId,_tmpStartedAt,_tmpFinishedAt,_tmpIsComplete,_tmpWinnerId,_tmpCurrentRound,_tmpCurrentDealerIndex,_tmpPhaseSetId)
         } else {
           _result = null
         }
@@ -203,6 +211,7 @@ public class GameDao_Impl(
         val _columnIndexOfWinnerId: Int = getColumnIndexOrThrow(_stmt, "winnerId")
         val _columnIndexOfCurrentRound: Int = getColumnIndexOrThrow(_stmt, "currentRound")
         val _columnIndexOfCurrentDealerIndex: Int = getColumnIndexOrThrow(_stmt, "currentDealerIndex")
+        val _columnIndexOfPhaseSetId: Int = getColumnIndexOrThrow(_stmt, "phaseSetId")
         val _result: GameEntity?
         if (_stmt.step()) {
           val _tmpId: Long
@@ -229,7 +238,9 @@ public class GameDao_Impl(
           _tmpCurrentRound = _stmt.getLong(_columnIndexOfCurrentRound).toInt()
           val _tmpCurrentDealerIndex: Int
           _tmpCurrentDealerIndex = _stmt.getLong(_columnIndexOfCurrentDealerIndex).toInt()
-          _result = GameEntity(_tmpId,_tmpStartedAt,_tmpFinishedAt,_tmpIsComplete,_tmpWinnerId,_tmpCurrentRound,_tmpCurrentDealerIndex)
+          val _tmpPhaseSetId: Long
+          _tmpPhaseSetId = _stmt.getLong(_columnIndexOfPhaseSetId)
+          _result = GameEntity(_tmpId,_tmpStartedAt,_tmpFinishedAt,_tmpIsComplete,_tmpWinnerId,_tmpCurrentRound,_tmpCurrentDealerIndex,_tmpPhaseSetId)
         } else {
           _result = null
         }

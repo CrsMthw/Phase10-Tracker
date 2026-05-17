@@ -17,8 +17,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.crsmthw.phase10tracker.data.model.PhaseRule
 import com.crsmthw.phase10tracker.data.model.RoundEntry
-import com.crsmthw.phase10tracker.data.model.getPhaseRule
 import com.crsmthw.phase10tracker.ui.RoundEntryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,9 +28,10 @@ fun RoundEntryScreen(
     onRoundSubmitted: () -> Unit,
     onBack: () -> Unit
 ) {
-    val entries   by vm.entries.collectAsState()
-    val gameState by vm.gameState.collectAsState()
-    val submitted by vm.submitted.collectAsState()
+    val entries    by vm.entries.collectAsState()
+    val gameState  by vm.gameState.collectAsState()
+    val submitted  by vm.submitted.collectAsState()
+    val phaseRules by vm.phaseRules.collectAsState()
     val focusManager = LocalFocusManager.current
     var showCardValues by remember { mutableStateOf(false) }
 
@@ -102,6 +103,7 @@ fun RoundEntryScreen(
             items(entries, key = { it.gamePlayerId }) { entry ->
                 RoundEntryCard(
                     entry = entry,
+                    phaseRules = phaseRules,
                     isLast = entry == entries.last(),
                     onScoreChange = { vm.updateScore(entry.gamePlayerId, it) },
                     onTogglePhase = { vm.togglePhaseCompleted(entry.gamePlayerId) },
@@ -118,13 +120,16 @@ fun RoundEntryScreen(
 @Composable
 private fun RoundEntryCard(
     entry: RoundEntry,
+    phaseRules: List<PhaseRule>,
     isLast: Boolean,
     onScoreChange: (String) -> Unit,
     onTogglePhase: () -> Unit,
     onNext: () -> Unit,
     onDone: () -> Unit
 ) {
-    val phaseRule = remember(entry.currentPhase) { getPhaseRule(entry.currentPhase) }
+    val phaseRule = remember(entry.currentPhase, phaseRules) {
+        phaseRules.getOrElse(entry.currentPhase - 1) { phaseRules.last() }
+    }
     val scoreInt = entry.scoreInput.trim().toIntOrNull()
 
     Card(

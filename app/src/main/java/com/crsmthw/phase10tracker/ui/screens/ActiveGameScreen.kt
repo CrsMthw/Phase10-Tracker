@@ -17,11 +17,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
+import com.crsmthw.phase10tracker.data.model.PhaseRule
 import com.crsmthw.phase10tracker.data.model.PlayerGameState
-import com.crsmthw.phase10tracker.data.model.getPhaseRule
 import com.crsmthw.phase10tracker.ui.ActiveGameViewModel
 
 private enum class ViewMode { SCORES, PHASES }
+
+// ── Helper: resolve the right PhaseRule from the game's list ─────────────────
+
+private fun List<PhaseRule>.forPhase(phase: Int): PhaseRule =
+    getOrElse(phase - 1) { last() }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,22 +41,17 @@ fun ActiveGameScreen(
     val gameState     by vm.gameState.collectAsState()
     val gameFinished  by vm.gameFinished.collectAsState()
     val gameCancelled by vm.gameCancelled.collectAsState()
+    val phaseRules    by vm.phaseRules.collectAsState()
 
     var showEndGameDialog by remember { mutableStateOf(false) }
-    // Single-pane tab mode (compact screens only)
     var viewMode by remember { mutableStateOf(ViewMode.SCORES) }
 
     LaunchedEffect(gameFinished)  { if (gameFinished)  onGameEnd() }
     LaunchedEffect(gameCancelled) { if (gameCancelled) onGameCancelled() }
 
-    // Detect window width — expanded = unfolded foldable or tablet
-    // Medium and above (≥600dp) = show both panes side by side
-    // This covers unfolded Z Fold 6 and tablets
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val isTwoPane = adaptiveInfo.windowSizeClass
         .isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)
-
-    // SupportingPaneScaffold navigator — handles showing 1 or 2 panes automatically
 
     if (showEndGameDialog) {
         val allZero = boardState.all { it.totalScore == 0 }
@@ -117,29 +117,25 @@ fun ActiveGameScreen(
         }
     ) { padding ->
         if (isTwoPane) {
-            // ── Wide layout: both panes side by side ─────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // Left pane — Scores
                 Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
                     PaneSectionHeader("Scores")
-                    ScoresView(boardState = boardState, fabClearance = false)
+                    ScoresView(boardState = boardState, phaseRules = phaseRules, fabClearance = false)
                 }
                 VerticalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.fillMaxHeight()
                 )
-                // Right pane — By Phase
                 Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
                     PaneSectionHeader("By Phase")
-                    PhasesView(boardState = boardState, fabClearance = false)
+                    PhasesView(boardState = boardState, phaseRules = phaseRules, fabClearance = false)
                 }
             }
         } else {
-            // ── Compact layout: single pane with tab switcher ─────────────────
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -165,8 +161,8 @@ fun ActiveGameScreen(
                     label = "viewMode"
                 ) { mode ->
                     when (mode) {
-                        ViewMode.SCORES -> ScoresView(boardState, fabClearance = true)
-                        ViewMode.PHASES -> PhasesView(boardState, fabClearance = true)
+                        ViewMode.SCORES -> ScoresView(boardState, phaseRules, fabClearance = true)
+                        ViewMode.PHASES -> PhasesView(boardState, phaseRules, fabClearance = true)
                     }
                 }
             }
@@ -197,6 +193,7 @@ private fun PaneSectionHeader(title: String) {
 @Composable
 private fun ScoresView(
     boardState: List<PlayerGameState>,
+    phaseRules: List<PhaseRule>,
     fabClearance: Boolean
 ) {
     LazyColumn(
@@ -205,7 +202,7 @@ private fun ScoresView(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         itemsIndexed(boardState, key = { _, p -> p.gamePlayerId }) { index, player ->
-            PlayerScoreCard(player = player, rank = index + 1)
+            PlayerScoreCard(player = player, rank = index + 1, phaseRules = phaseRules)
         }
         if (fabClearance) item { Spacer(Modifier.height(80.dp)) }
     }
@@ -216,6 +213,7 @@ private fun ScoresView(
 @Composable
 private fun PhasesView(
     boardState: List<PlayerGameState>,
+    phaseRules: List<PhaseRule>,
     fabClearance: Boolean
 ) {
     val grouped = boardState
@@ -228,7 +226,7 @@ private fun PhasesView(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         grouped.forEach { (phase, players) ->
-            val rule = getPhaseRule(phase)
+            val rule = phaseRules.forPhase(phase)
             item(key = "header_$phase") {
                 PhaseGroupHeader(phase = phase, rule = rule.title)
             }
@@ -331,24 +329,28 @@ private fun PhaseGroupPlayerCard(player: PlayerGameState) {
 // ── Score card ────────────────────────────────────────────────────────────────
 
 @Composable
-private fun PlayerScoreCard(player: PlayerGameState, rank: Int) {
+private fun PlayerScoreCard(
+    player: PlayerGameState,
+    rank: Int,
+    phaseRules: List<PhaseRule>
+) {
     var expanded by remember { mutableStateOf(false) }
-    val phaseRule = remember(player.currentPhase) { getPhaseRule(player.currentPhase) }
     val phase = minOf(player.currentPhase, 10)
+    val phaseRule = phaseRules.forPhase(phase)
 
     val cardColor = when (rank) {
-        1 -> MaterialTheme.colorScheme.primaryContainer
-        2 -> MaterialTheme.colorScheme.secondaryContainer
+        1    -> MaterialTheme.colorScheme.primaryContainer
+        2    -> MaterialTheme.colorScheme.secondaryContainer
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
     val badgeColor = when (rank) {
-        1 -> MaterialTheme.colorScheme.primary
-        2 -> MaterialTheme.colorScheme.secondary
+        1    -> MaterialTheme.colorScheme.primary
+        2    -> MaterialTheme.colorScheme.secondary
         else -> MaterialTheme.colorScheme.tertiaryContainer
     }
     val badgeTextColor = when (rank) {
-        1 -> MaterialTheme.colorScheme.onPrimary
-        2 -> MaterialTheme.colorScheme.onSecondary
+        1    -> MaterialTheme.colorScheme.onPrimary
+        2    -> MaterialTheme.colorScheme.onSecondary
         else -> MaterialTheme.colorScheme.onTertiaryContainer
     }
 
