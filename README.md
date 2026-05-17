@@ -23,6 +23,7 @@ Every Phase 10 score tracker app on the Play Store falls into one of a few categ
   <img src="assets/screenshots/entry.png" width="200" />
   <img src="assets/screenshots/result.png" width="200" />
   <img src="assets/screenshots/leaderboard.png" width="200" />
+  <img src="assets/screenshots/custom.png" width="200" />
 </p>
 
 ### Foldable / Tablet — Dual Pane
@@ -146,4 +147,4 @@ MIT. Do whatever you want with it.
 
 ---
 
-*Built with Claude — because the Play Store didn't deserve another ad-infested score tracker.*
+*Built with Claude — because the people didn't deserve another ad-infested score tracker.*
