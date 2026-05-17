@@ -2,8 +2,11 @@ package com.crsmthw.phase10tracker.ui
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
@@ -25,6 +28,25 @@ object Routes {
     fun activeGame(id: Long)  = "game/$id"
     fun roundEntry(id: Long)  = "round/$id"
     fun gameResults(id: Long) = "results/$id"
+}
+
+// ── Safe navigation helpers ───────────────────────────────────────────────────
+// Guards every nav action behind a RESUMED check so rapid double-taps during
+// transition animations can't pop extra destinations and cause a blank screen.
+
+private fun NavController.navigateSafe(
+    route: String,
+    builder: NavOptionsBuilder.() -> Unit = {}
+) {
+    if (currentBackStackEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED) {
+        navigate(route, builder)
+    }
+}
+
+private fun NavController.popSafe() {
+    if (currentBackStackEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED) {
+        popBackStack()
+    }
 }
 
 @Composable
@@ -57,12 +79,12 @@ fun Phase10NavHost(
                 amoledBlack         = amoledBlack,
                 onThemeModeChange   = themeVm::setThemeMode,
                 onAmoledBlackChange = themeVm::setAmoledBlack,
-                onContinueGame      = { gameId -> navController.navigate(Routes.activeGame(gameId)) },
-                onStartNew          = { navController.navigate(Routes.GAME_SETUP) },
-                onLeaderboard       = { navController.navigate(Routes.LEADERBOARD) },
-                onManagePlayers     = { navController.navigate(Routes.PLAYER_ROSTER) },
-                onCustomRules       = { navController.navigate(Routes.CUSTOM_RULES) },
-                onAbout             = { navController.navigate(Routes.ABOUT) }
+                onContinueGame      = { gameId -> navController.navigateSafe(Routes.activeGame(gameId)) },
+                onStartNew          = { navController.navigateSafe(Routes.GAME_SETUP) },
+                onLeaderboard       = { navController.navigateSafe(Routes.LEADERBOARD) },
+                onManagePlayers     = { navController.navigateSafe(Routes.PLAYER_ROSTER) },
+                onCustomRules       = { navController.navigateSafe(Routes.CUSTOM_RULES) },
+                onAbout             = { navController.navigateSafe(Routes.ABOUT) }
             )
         }
 
@@ -70,7 +92,7 @@ fun Phase10NavHost(
             val vm: PlayerRosterViewModel = viewModel(factory = factory)
             PlayerRosterScreen(
                 vm     = vm,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popSafe() }
             )
         }
 
@@ -79,11 +101,11 @@ fun Phase10NavHost(
             GameSetupScreen(
                 vm            = vm,
                 onGameStarted = { gameId ->
-                    navController.navigate(Routes.activeGame(gameId)) {
+                    navController.navigateSafe(Routes.activeGame(gameId)) {
                         popUpTo(Routes.HOME)
                     }
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popSafe() }
             )
         }
 
@@ -96,18 +118,18 @@ fun Phase10NavHost(
             val vm: ActiveGameViewModel = viewModel(factory = gameFactory)
             ActiveGameScreen(
                 vm              = vm,
-                onEnterRound    = { navController.navigate(Routes.roundEntry(gameId)) },
+                onEnterRound    = { navController.navigateSafe(Routes.roundEntry(gameId)) },
                 onGameEnd       = {
-                    navController.navigate(Routes.gameResults(gameId)) {
+                    navController.navigateSafe(Routes.gameResults(gameId)) {
                         popUpTo(Routes.HOME)
                     }
                 },
                 onGameCancelled = {
-                    navController.navigate(Routes.HOME) {
+                    navController.navigateSafe(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popSafe() }
             )
         }
 
@@ -120,8 +142,8 @@ fun Phase10NavHost(
             val vm: RoundEntryViewModel = viewModel(factory = gameFactory)
             RoundEntryScreen(
                 vm               = vm,
-                onRoundSubmitted = { navController.popBackStack() },
-                onBack           = { navController.popBackStack() }
+                onRoundSubmitted = { navController.popSafe() },
+                onBack           = { navController.popSafe() }
             )
         }
 
@@ -135,7 +157,7 @@ fun Phase10NavHost(
             GameResultsScreen(
                 vm     = vm,
                 onHome = {
-                    navController.navigate(Routes.HOME) {
+                    navController.navigateSafe(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
                 }
@@ -146,7 +168,7 @@ fun Phase10NavHost(
             val vm: LeaderboardViewModel = viewModel(factory = factory)
             LeaderboardScreen(
                 vm     = vm,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popSafe() }
             )
         }
 
@@ -154,12 +176,12 @@ fun Phase10NavHost(
             val vm: CustomPhasesViewModel = viewModel(factory = factory)
             CustomPhasesScreen(
                 vm     = vm,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popSafe() }
             )
         }
 
         composable(Routes.ABOUT) {
-            AboutScreen(onBack = { navController.popBackStack() })
+            AboutScreen(onBack = { navController.popSafe() })
         }
     }
 }
