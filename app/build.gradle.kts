@@ -12,8 +12,8 @@ android {
         applicationId = "com.crsmthw.phase10tracker"
         minSdk = 35
         targetSdk = 37
-        versionCode = 4
-        versionName = "3.0.0"
+        versionCode = 5
+        versionName = "3.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

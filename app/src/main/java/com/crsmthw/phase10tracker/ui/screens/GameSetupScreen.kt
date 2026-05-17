@@ -273,7 +273,7 @@ fun GameSetupScreen(
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Text(
-                        "Hold the ≡ handle and drag to reorder. First player is the initial dealer.",
+                        "Hold the = handle and drag to reorder. First player is the initial dealer.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
