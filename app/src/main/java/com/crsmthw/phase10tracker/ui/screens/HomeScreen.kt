@@ -17,11 +17,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.crsmthw.phase10tracker.R
 import com.crsmthw.phase10tracker.ui.HomeViewModel
+import com.crsmthw.phase10tracker.ui.theme.ThemePreference
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     vm: HomeViewModel,
+    currentTheme: ThemePreference,
+    onThemeChange: (ThemePreference) -> Unit,
     onContinueGame: (Long) -> Unit,
     onStartNew: () -> Unit,
     onLeaderboard: () -> Unit,
@@ -59,6 +62,10 @@ fun HomeScreen(
                     )
                 },
                 actions = {
+                    ThemeToggleButton(
+                        currentTheme = currentTheme,
+                        onThemeChange = onThemeChange
+                    )
                     IconButton(onClick = onAbout) {
                         Icon(Icons.Filled.Info, contentDescription = "About")
                     }
@@ -203,5 +210,104 @@ private fun ResumeGameDialog(
         dismissButton = {
             OutlinedButton(onClick = onStartNew) { Text("New Game") }
         }
+    )
+}
+
+// ── Theme toggle ─────────────────────────────────────────────────────────────
+// IconButton in the TopAppBar that reflects the current theme and opens a
+// dropdown letting the user pick Light / Dark / System.
+
+@Composable
+private fun ThemeToggleButton(
+    currentTheme: ThemePreference,
+    onThemeChange: (ThemePreference) -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { menuExpanded = true }) {
+            Icon(
+                imageVector = when (currentTheme) {
+                    ThemePreference.LIGHT  -> Icons.Filled.LightMode
+                    ThemePreference.DARK   -> Icons.Filled.DarkMode
+                    ThemePreference.AMOLED -> Icons.Filled.Contrast
+                    ThemePreference.SYSTEM -> Icons.Filled.BrightnessAuto
+                },
+                contentDescription = "Theme"
+            )
+        }
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false }
+        ) {
+            ThemeMenuItem(
+                label = "Light",
+                icon = Icons.Filled.LightMode,
+                selected = currentTheme == ThemePreference.LIGHT,
+                onClick = {
+                    onThemeChange(ThemePreference.LIGHT)
+                    menuExpanded = false
+                }
+            )
+            ThemeMenuItem(
+                label = "Dark",
+                icon = Icons.Filled.DarkMode,
+                selected = currentTheme == ThemePreference.DARK,
+                onClick = {
+                    onThemeChange(ThemePreference.DARK)
+                    menuExpanded = false
+                }
+            )
+            ThemeMenuItem(
+                label = "AMOLED Black",
+                icon = Icons.Filled.Contrast,
+                selected = currentTheme == ThemePreference.AMOLED,
+                onClick = {
+                    onThemeChange(ThemePreference.AMOLED)
+                    menuExpanded = false
+                }
+            )
+            ThemeMenuItem(
+                label = "System default",
+                icon = Icons.Filled.BrightnessAuto,
+                selected = currentTheme == ThemePreference.SYSTEM,
+                onClick = {
+                    onThemeChange(ThemePreference.SYSTEM)
+                    menuExpanded = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeMenuItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    DropdownMenuItem(
+        text = {
+            Text(
+                text = label,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (selected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurface
+            )
+        },
+        onClick = onClick,
+        leadingIcon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (selected) MaterialTheme.colorScheme.primary
+                       else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        trailingIcon = if (selected) {
+            { Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+        } else null
     )
 }

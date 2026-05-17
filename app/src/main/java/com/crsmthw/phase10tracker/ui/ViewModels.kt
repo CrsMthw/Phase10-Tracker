@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.crsmthw.phase10tracker.data.model.*
 import com.crsmthw.phase10tracker.data.repository.GameRepository
+import com.crsmthw.phase10tracker.data.repository.ThemePreferenceRepository
+import com.crsmthw.phase10tracker.ui.theme.ThemePreference
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -286,6 +288,29 @@ class ViewModelFactory(
         modelClass.isAssignableFrom(GameResultsViewModel::class.java)  -> GameResultsViewModel(repo, gameId) as T
         modelClass.isAssignableFrom(LeaderboardViewModel::class.java)  -> LeaderboardViewModel(repo) as T
         modelClass.isAssignableFrom(CustomRulesViewModel::class.java)  -> CustomRulesViewModel(repo) as T
+        else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
+    }
+}
+
+// ── Theme ViewModel ───────────────────────────────────────────────────────────
+
+class ThemeViewModel(private val repo: ThemePreferenceRepository) : ViewModel() {
+
+    val themePreference: StateFlow<ThemePreference> = repo.themePreference
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ThemePreference.SYSTEM)
+
+    fun setTheme(preference: ThemePreference) {
+        viewModelScope.launch { repo.setThemePreference(preference) }
+    }
+}
+
+class ThemeViewModelFactory(
+    private val repo: ThemePreferenceRepository
+) : ViewModelProvider.Factory {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T = when {
+        modelClass.isAssignableFrom(ThemeViewModel::class.java) -> ThemeViewModel(repo) as T
         else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
     }
 }

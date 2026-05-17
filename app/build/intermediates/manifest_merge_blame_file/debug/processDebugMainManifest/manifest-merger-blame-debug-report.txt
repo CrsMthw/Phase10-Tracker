@@ -1,8 +1,8 @@
 1<?xml version="1.0" encoding="utf-8"?>
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
 3    package="com.crsmthw.phase10tracker"
-4    android:versionCode="1"
-5    android:versionName="1.0" >
+4    android:versionCode="3"
+5    android:versionName="2.2.0" >
 6
 7    <uses-sdk
 7-->INJECTED
@@ -12,22 +12,22 @@
 9-->INJECTED
 10
 11    <permission
-11-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/408d1f461909c1fe123b9734309c53b3/transformed/core-1.18.0/AndroidManifest.xml:22:5-24:47
+11-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/cd5633a5fc0beee91c41af6b7cd823b3/transformed/core-1.18.0/AndroidManifest.xml:22:5-24:47
 12        android:name="com.crsmthw.phase10tracker.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-12-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/408d1f461909c1fe123b9734309c53b3/transformed/core-1.18.0/AndroidManifest.xml:23:9-81
+12-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/cd5633a5fc0beee91c41af6b7cd823b3/transformed/core-1.18.0/AndroidManifest.xml:23:9-81
 13        android:protectionLevel="signature" />
-13-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/408d1f461909c1fe123b9734309c53b3/transformed/core-1.18.0/AndroidManifest.xml:24:9-44
+13-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/cd5633a5fc0beee91c41af6b7cd823b3/transformed/core-1.18.0/AndroidManifest.xml:24:9-44
 14
 15    <uses-permission android:name="com.crsmthw.phase10tracker.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-15-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/408d1f461909c1fe123b9734309c53b3/transformed/core-1.18.0/AndroidManifest.xml:26:5-97
-15-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/408d1f461909c1fe123b9734309c53b3/transformed/core-1.18.0/AndroidManifest.xml:26:22-94
+15-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/cd5633a5fc0beee91c41af6b7cd823b3/transformed/core-1.18.0/AndroidManifest.xml:26:5-97
+15-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/cd5633a5fc0beee91c41af6b7cd823b3/transformed/core-1.18.0/AndroidManifest.xml:26:22-94
 16
 17    <application
 17-->/home/cris/Documents/Phase10Tracker/app/src/main/AndroidManifest.xml:4:5-22:19
 18        android:allowBackup="true"
 18-->/home/cris/Documents/Phase10Tracker/app/src/main/AndroidManifest.xml:5:9-35
 19        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-19-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/408d1f461909c1fe123b9734309c53b3/transformed/core-1.18.0/AndroidManifest.xml:28:18-86
+19-->[androidx.core:core:1.18.0] /home/cris/.gradle/caches/9.4.1/transforms/cd5633a5fc0beee91c41af6b7cd823b3/transformed/core-1.18.0/AndroidManifest.xml:28:18-86
 20        android:debuggable="true"
 21        android:enableOnBackInvokedCallback="true"
 21-->/home/cris/Documents/Phase10Tracker/app/src/main/AndroidManifest.xml:10:9-51
@@ -64,106 +64,106 @@
 37            </intent-filter>
 38        </activity>
 39        <activity
-39-->[androidx.compose.ui:ui-test-manifest:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/6d1e5e2a8167354d974a511809916082/transformed/ui-test-manifest-1.12.0-alpha02/AndroidManifest.xml:23:9-26:79
+39-->[androidx.compose.ui:ui-test-manifest:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/78211ce5dd4978840ff7546d94d457ca/transformed/ui-test-manifest-1.12.0-alpha02/AndroidManifest.xml:23:9-26:79
 40            android:name="androidx.activity.ComponentActivity"
-40-->[androidx.compose.ui:ui-test-manifest:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/6d1e5e2a8167354d974a511809916082/transformed/ui-test-manifest-1.12.0-alpha02/AndroidManifest.xml:24:13-63
+40-->[androidx.compose.ui:ui-test-manifest:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/78211ce5dd4978840ff7546d94d457ca/transformed/ui-test-manifest-1.12.0-alpha02/AndroidManifest.xml:24:13-63
 41            android:exported="true"
-41-->[androidx.compose.ui:ui-test-manifest:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/6d1e5e2a8167354d974a511809916082/transformed/ui-test-manifest-1.12.0-alpha02/AndroidManifest.xml:25:13-36
+41-->[androidx.compose.ui:ui-test-manifest:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/78211ce5dd4978840ff7546d94d457ca/transformed/ui-test-manifest-1.12.0-alpha02/AndroidManifest.xml:25:13-36
 42            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
-42-->[androidx.compose.ui:ui-test-manifest:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/6d1e5e2a8167354d974a511809916082/transformed/ui-test-manifest-1.12.0-alpha02/AndroidManifest.xml:26:13-76
+42-->[androidx.compose.ui:ui-test-manifest:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/78211ce5dd4978840ff7546d94d457ca/transformed/ui-test-manifest-1.12.0-alpha02/AndroidManifest.xml:26:13-76
 43
 44        <provider
-44-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/cb6f51c3db973ce033d02d73895796cf/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
+44-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/1446921dc1075d51866a7acdc63d3919/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
 45            android:name="androidx.startup.InitializationProvider"
-45-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/cb6f51c3db973ce033d02d73895796cf/transformed/emoji2-1.4.0/AndroidManifest.xml:25:13-67
+45-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/1446921dc1075d51866a7acdc63d3919/transformed/emoji2-1.4.0/AndroidManifest.xml:25:13-67
 46            android:authorities="com.crsmthw.phase10tracker.androidx-startup"
-46-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/cb6f51c3db973ce033d02d73895796cf/transformed/emoji2-1.4.0/AndroidManifest.xml:26:13-68
+46-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/1446921dc1075d51866a7acdc63d3919/transformed/emoji2-1.4.0/AndroidManifest.xml:26:13-68
 47            android:exported="false" >
-47-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/cb6f51c3db973ce033d02d73895796cf/transformed/emoji2-1.4.0/AndroidManifest.xml:27:13-37
+47-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/1446921dc1075d51866a7acdc63d3919/transformed/emoji2-1.4.0/AndroidManifest.xml:27:13-37
 48            <meta-data
-48-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/cb6f51c3db973ce033d02d73895796cf/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
+48-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/1446921dc1075d51866a7acdc63d3919/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
 49                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-49-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/cb6f51c3db973ce033d02d73895796cf/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
+49-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/1446921dc1075d51866a7acdc63d3919/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
 50                android:value="androidx.startup" />
-50-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/cb6f51c3db973ce033d02d73895796cf/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
+50-->[androidx.emoji2:emoji2:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/1446921dc1075d51866a7acdc63d3919/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
 51            <meta-data
-51-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/cris/.gradle/caches/9.4.1/transforms/c0c2177f11b9fca85f73f50c8fa3f98e/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:29:13-31:52
+51-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/cris/.gradle/caches/9.4.1/transforms/12f4c06a91dde94972974ff247714006/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:29:13-31:52
 52                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-52-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/cris/.gradle/caches/9.4.1/transforms/c0c2177f11b9fca85f73f50c8fa3f98e/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:30:17-78
+52-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/cris/.gradle/caches/9.4.1/transforms/12f4c06a91dde94972974ff247714006/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:30:17-78
 53                android:value="androidx.startup" />
-53-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/cris/.gradle/caches/9.4.1/transforms/c0c2177f11b9fca85f73f50c8fa3f98e/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:31:17-49
+53-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/cris/.gradle/caches/9.4.1/transforms/12f4c06a91dde94972974ff247714006/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:31:17-49
 54            <meta-data
-54-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:29:13-31:52
+54-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:29:13-31:52
 55                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-55-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:30:17-85
+55-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:30:17-85
 56                android:value="androidx.startup" />
-56-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:31:17-49
+56-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:31:17-49
 57        </provider>
 58
 59        <uses-library
-59-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/9dec913fc40328ad06a00cd83969c5f4/transformed/window-1.5.1/AndroidManifest.xml:23:9-25:40
+59-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/1ecdac0a39e3d06551c3d86a0d10d68b/transformed/window-1.5.1/AndroidManifest.xml:23:9-25:40
 60            android:name="androidx.window.extensions"
-60-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/9dec913fc40328ad06a00cd83969c5f4/transformed/window-1.5.1/AndroidManifest.xml:24:13-54
+60-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/1ecdac0a39e3d06551c3d86a0d10d68b/transformed/window-1.5.1/AndroidManifest.xml:24:13-54
 61            android:required="false" />
-61-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/9dec913fc40328ad06a00cd83969c5f4/transformed/window-1.5.1/AndroidManifest.xml:25:13-37
+61-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/1ecdac0a39e3d06551c3d86a0d10d68b/transformed/window-1.5.1/AndroidManifest.xml:25:13-37
 62        <uses-library
-62-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/9dec913fc40328ad06a00cd83969c5f4/transformed/window-1.5.1/AndroidManifest.xml:26:9-28:40
+62-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/1ecdac0a39e3d06551c3d86a0d10d68b/transformed/window-1.5.1/AndroidManifest.xml:26:9-28:40
 63            android:name="androidx.window.sidecar"
-63-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/9dec913fc40328ad06a00cd83969c5f4/transformed/window-1.5.1/AndroidManifest.xml:27:13-51
+63-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/1ecdac0a39e3d06551c3d86a0d10d68b/transformed/window-1.5.1/AndroidManifest.xml:27:13-51
 64            android:required="false" />
-64-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/9dec913fc40328ad06a00cd83969c5f4/transformed/window-1.5.1/AndroidManifest.xml:28:13-37
+64-->[androidx.window:window:1.5.1] /home/cris/.gradle/caches/9.4.1/transforms/1ecdac0a39e3d06551c3d86a0d10d68b/transformed/window-1.5.1/AndroidManifest.xml:28:13-37
 65
 66        <activity
-66-->[androidx.compose.ui:ui-tooling-android:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/6105026a8524dc783bf20693f905fc0f/transformed/ui-tooling/AndroidManifest.xml:23:9-25:39
+66-->[androidx.compose.ui:ui-tooling-android:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/9f54b33dd332c63e0ea1e890d5a9bb85/transformed/ui-tooling/AndroidManifest.xml:23:9-25:39
 67            android:name="androidx.compose.ui.tooling.PreviewActivity"
-67-->[androidx.compose.ui:ui-tooling-android:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/6105026a8524dc783bf20693f905fc0f/transformed/ui-tooling/AndroidManifest.xml:24:13-71
+67-->[androidx.compose.ui:ui-tooling-android:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/9f54b33dd332c63e0ea1e890d5a9bb85/transformed/ui-tooling/AndroidManifest.xml:24:13-71
 68            android:exported="true" />
-68-->[androidx.compose.ui:ui-tooling-android:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/6105026a8524dc783bf20693f905fc0f/transformed/ui-tooling/AndroidManifest.xml:25:13-36
+68-->[androidx.compose.ui:ui-tooling-android:1.12.0-alpha02] /home/cris/.gradle/caches/9.4.1/transforms/9f54b33dd332c63e0ea1e890d5a9bb85/transformed/ui-tooling/AndroidManifest.xml:25:13-36
 69
 70        <service
-70-->[androidx.room:room-runtime-android:2.8.4] /home/cris/.gradle/caches/9.4.1/transforms/62f01eb008acb02f57f5ff755dd3496f/transformed/room-runtime/AndroidManifest.xml:24:9-28:63
+70-->[androidx.room:room-runtime-android:2.8.4] /home/cris/.gradle/caches/9.4.1/transforms/72e852364f16a22002bc0419ac8a36fc/transformed/room-runtime/AndroidManifest.xml:24:9-28:63
 71            android:name="androidx.room.MultiInstanceInvalidationService"
-71-->[androidx.room:room-runtime-android:2.8.4] /home/cris/.gradle/caches/9.4.1/transforms/62f01eb008acb02f57f5ff755dd3496f/transformed/room-runtime/AndroidManifest.xml:25:13-74
+71-->[androidx.room:room-runtime-android:2.8.4] /home/cris/.gradle/caches/9.4.1/transforms/72e852364f16a22002bc0419ac8a36fc/transformed/room-runtime/AndroidManifest.xml:25:13-74
 72            android:directBootAware="true"
-72-->[androidx.room:room-runtime-android:2.8.4] /home/cris/.gradle/caches/9.4.1/transforms/62f01eb008acb02f57f5ff755dd3496f/transformed/room-runtime/AndroidManifest.xml:26:13-43
+72-->[androidx.room:room-runtime-android:2.8.4] /home/cris/.gradle/caches/9.4.1/transforms/72e852364f16a22002bc0419ac8a36fc/transformed/room-runtime/AndroidManifest.xml:26:13-43
 73            android:exported="false" />
-73-->[androidx.room:room-runtime-android:2.8.4] /home/cris/.gradle/caches/9.4.1/transforms/62f01eb008acb02f57f5ff755dd3496f/transformed/room-runtime/AndroidManifest.xml:27:13-37
+73-->[androidx.room:room-runtime-android:2.8.4] /home/cris/.gradle/caches/9.4.1/transforms/72e852364f16a22002bc0419ac8a36fc/transformed/room-runtime/AndroidManifest.xml:27:13-37
 74
 75        <receiver
-75-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:34:9-52:20
+75-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:34:9-52:20
 76            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-76-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:35:13-76
+76-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:35:13-76
 77            android:directBootAware="false"
-77-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:36:13-44
+77-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:36:13-44
 78            android:enabled="true"
-78-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:37:13-35
+78-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:37:13-35
 79            android:exported="true"
-79-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:38:13-36
+79-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:38:13-36
 80            android:permission="android.permission.DUMP" >
-80-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:39:13-57
+80-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:39:13-57
 81            <intent-filter>
-81-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:40:13-42:29
+81-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:40:13-42:29
 82                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-82-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:17-91
-82-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:25-88
+82-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:17-91
+82-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:25-88
 83            </intent-filter>
 84            <intent-filter>
-84-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:43:13-45:29
+84-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:43:13-45:29
 85                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-85-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:17-85
-85-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:25-82
+85-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:17-85
+85-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:25-82
 86            </intent-filter>
 87            <intent-filter>
-87-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:46:13-48:29
+87-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:46:13-48:29
 88                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-88-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:17-88
-88-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:25-85
+88-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:17-88
+88-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:25-85
 89            </intent-filter>
 90            <intent-filter>
-90-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:49:13-51:29
+90-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:49:13-51:29
 91                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-91-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:17-95
-91-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/aac1a918337176278237eac6a0e66a9d/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:25-92
+91-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:17-95
+91-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/cris/.gradle/caches/9.4.1/transforms/e8a451c5695f0fc92b213988e047d477/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:25-92
 92            </intent-filter>
 93        </receiver>
 94    </application>

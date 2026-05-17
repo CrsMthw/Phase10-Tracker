@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.crsmthw.phase10tracker.data.db.Phase10Database
 import com.crsmthw.phase10tracker.data.repository.GameRepository
 import com.crsmthw.phase10tracker.ui.screens.*
+import com.crsmthw.phase10tracker.ui.theme.ThemePreference
 
 object Routes {
     const val HOME           = "home"
@@ -28,7 +29,11 @@ object Routes {
 }
 
 @Composable
-fun Phase10NavHost(navController: NavHostController) {
+fun Phase10NavHost(
+    navController: NavHostController,
+    currentTheme: ThemePreference,
+    onThemeChange: (ThemePreference) -> Unit
+) {
     val context = LocalContext.current
     val db = remember { Phase10Database.getInstance(context) }
     val repo = remember {
@@ -48,6 +53,8 @@ fun Phase10NavHost(navController: NavHostController) {
             val vm: HomeViewModel = viewModel(factory = factory)
             HomeScreen(
                 vm = vm,
+                currentTheme = currentTheme,
+                onThemeChange = onThemeChange,
                 onContinueGame = { gameId -> navController.navigate(Routes.activeGame(gameId)) },
                 onStartNew     = { navController.navigate(Routes.GAME_SETUP) },
                 onLeaderboard  = { navController.navigate(Routes.LEADERBOARD) },
