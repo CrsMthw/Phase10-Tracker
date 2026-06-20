@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -19,179 +20,185 @@ import androidx.compose.ui.unit.dp
 import com.crsmthw.phase10tracker.R
 import com.crsmthw.phase10tracker.data.ThemeMode
 import com.crsmthw.phase10tracker.ui.HomeViewModel
+import com.crsmthw.phase10tracker.ui.components.CappedModalBottomSheet
+import com.crsmthw.phase10tracker.ui.components.ConnectedChoiceRow
+import com.crsmthw.phase10tracker.util.confirm
+import com.crsmthw.phase10tracker.util.press
+import com.crsmthw.phase10tracker.util.toggle
 
 // ── Home Screen ────────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
     vm: HomeViewModel,
     themeMode: ThemeMode,
     amoledBlack: Boolean,
+    haptics: Boolean,
     onThemeModeChange: (ThemeMode) -> Unit,
     onAmoledBlackChange: (Boolean) -> Unit,
+    onHapticsChange: (Boolean) -> Unit,
     onContinueGame: (Long) -> Unit,
     onStartNew: () -> Unit,
     onLeaderboard: () -> Unit,
+    onGameHistory: () -> Unit,
     onManagePlayers: () -> Unit,
     onCustomRules: () -> Unit,
     onAbout: () -> Unit
 ) {
     val hasActiveGame by vm.hasActiveGame.collectAsState()
     val activeGameId  by vm.activeGameId.collectAsState()
+    val hf = LocalHapticFeedback.current
 
     var showResumeDialog by remember { mutableStateOf(false) }
     var showThemeSheet   by remember { mutableStateOf(false) }
 
-    // ── Resume dialog ──────────────────────────────────────────────────────────
     if (showResumeDialog && hasActiveGame && activeGameId != null) {
         ResumeGameDialog(
             onContinue = {
-                showResumeDialog = false
-                onContinueGame(activeGameId!!)
+                hf.confirm(); showResumeDialog = false; onContinueGame(activeGameId!!)
             },
             onStartNew = {
-                showResumeDialog = false
-                onStartNew()
+                hf.confirm(); showResumeDialog = false; onStartNew()
             },
             onDismiss = { showResumeDialog = false }
         )
     }
 
-    // ── Theme bottom sheet ─────────────────────────────────────────────────────
     if (showThemeSheet) {
-        ThemePickerSheet(
+        AppearanceSheet(
             currentMode         = themeMode,
             amoledBlack         = amoledBlack,
+            haptics             = haptics,
             onModeSelected      = onThemeModeChange,
             onAmoledBlackChange = onAmoledBlackChange,
+            onHapticsChange     = onHapticsChange,
             onDismiss           = { showThemeSheet = false }
         )
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text  = "Phase 10",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                },
+                title = {},
                 actions = {
-                    // Theme picker button — icon reflects current mode
-                    IconButton(onClick = { showThemeSheet = true }) {
-                        Icon(
-                            imageVector      = themeMode.icon(),
-                            contentDescription = "Display theme"
-                        )
+                    IconButton(onClick = { hf.press(); showThemeSheet = true }) {
+                        Icon(themeMode.icon(), contentDescription = "Display theme")
                     }
-                    IconButton(onClick = onAbout) {
+                    IconButton(onClick = { hf.press(); onAbout() }) {
                         Icon(Icons.Filled.Info, contentDescription = "About")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor   = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
     ) { padding ->
         Column(
-            modifier              = Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
-            verticalArrangement   = Arrangement.Center,
-            horizontalAlignment   = Alignment.CenterHorizontally
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter           = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = null,
-                modifier          = Modifier
-                    .size(120.dp)
-                    .clip(MaterialTheme.shapes.extraLarge)
-                    .background(MaterialTheme.colorScheme.primary)
+                modifier = Modifier
+                    .size(128.dp)
+                    .clip(MaterialShapes.Clover4Leaf.toShape())
+                    .background(MaterialTheme.colorScheme.primaryContainer)
             )
 
             Spacer(Modifier.height(20.dp))
 
             Text(
-                text      = "Phase 10\nScore Tracker",
-                style     = MaterialTheme.typography.displaySmall,
+                text = "Phase 10\nScore Tracker",
+                style = MaterialTheme.typography.displaySmall,
                 textAlign = TextAlign.Center,
-                color     = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text  = "Ad-free. Open source. Always.",
+                text = "Ad-free. Open source. Always.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(Modifier.height(56.dp))
+            Spacer(Modifier.height(48.dp))
 
             Button(
-                onClick  = {
-                    if (hasActiveGame) showResumeDialog = true
-                    else onStartNew()
+                onClick = {
+                    hf.confirm()
+                    if (hasActiveGame) showResumeDialog = true else onStartNew()
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape    = MaterialTheme.shapes.large
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+                shape = MaterialTheme.shapes.large
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                Icon(if (hasActiveGame) Icons.Filled.PlayArrow else Icons.Filled.Add, null)
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text  = if (hasActiveGame) "Game In Progress" else "Start New Game",
+                    text = if (hasActiveGame) "Game In Progress" else "Start New Game",
                     style = MaterialTheme.typography.titleMedium
                 )
             }
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedButton(
-                onClick  = onLeaderboard,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape    = MaterialTheme.shapes.large
-            ) {
-                Icon(Icons.Outlined.EmojiEvents, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Leaderboard", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                FilledTonalButton(
+                    onClick = { hf.press(); onLeaderboard() },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Icon(Icons.Outlined.EmojiEvents, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Leaderboard", style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                }
+                FilledTonalButton(
+                    onClick = { hf.press(); onGameHistory() },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Icon(Icons.Filled.History, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("History", style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                }
             }
 
             Spacer(Modifier.height(12.dp))
 
-            TextButton(
-                onClick  = onManagePlayers,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Outlined.Group, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Manage Saved Players", style = MaterialTheme.typography.titleMedium)
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            TextButton(
-                onClick  = onCustomRules,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Filled.Tune, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Custom Phases", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = { hf.press(); onManagePlayers() },
+                    modifier = Modifier.weight(1f).height(52.dp),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Icon(Icons.Outlined.Group, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Players")
+                }
+                OutlinedButton(
+                    onClick = { hf.press(); onCustomRules() },
+                    modifier = Modifier.weight(1f).height(52.dp),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Icon(Icons.Filled.Tune, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Phases")
+                }
             }
         }
     }
 }
 
 // ── Theme icon helper ──────────────────────────────────────────────────────────
-// The TopAppBar icon reflects the currently-active mode.
 
 private fun ThemeMode.icon(): ImageVector = when (this) {
     ThemeMode.LIGHT  -> Icons.Outlined.LightMode
@@ -199,25 +206,27 @@ private fun ThemeMode.icon(): ImageVector = when (this) {
     ThemeMode.SYSTEM -> Icons.Outlined.BrightnessMedium
 }
 
-// ── Theme Picker BottomSheet ───────────────────────────────────────────────────
+// ── Appearance bottom sheet (theme mode + AMOLED + haptics) ─────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ThemePickerSheet(
+private fun AppearanceSheet(
     currentMode: ThemeMode,
     amoledBlack: Boolean,
+    haptics: Boolean,
     onModeSelected: (ThemeMode) -> Unit,
     onAmoledBlackChange: (Boolean) -> Unit,
+    onHapticsChange: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val hf = LocalHapticFeedback.current
+    val themeOptions = listOf(
+        ThemeMode.SYSTEM to "Auto",
+        ThemeMode.LIGHT to "Light",
+        ThemeMode.DARK to "Dark",
+    )
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState       = sheetState,
-        containerColor   = MaterialTheme.colorScheme.surface,
-        tonalElevation   = 0.dp,
-    ) {
+    CappedModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -225,111 +234,95 @@ private fun ThemePickerSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Header ────────────────────────────────────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(
-                    imageVector        = Icons.Outlined.Palette,
-                    contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.primary,
-                    modifier           = Modifier.size(24.dp)
+                    Icons.Outlined.Palette, null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text  = "Display Theme",
+                    "Appearance",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
-            // ── Mode selector (segmented buttons) ─────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text  = "Mode",
+                    "Theme",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    ThemeModeOption.entries.forEachIndexed { index, option ->
-                        SegmentedButton(
-                            selected = currentMode == option.mode,
-                            onClick  = { onModeSelected(option.mode) },
-                            shape    = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = ThemeModeOption.entries.size
-                            ),
-                            icon = {
-                                SegmentedButtonDefaults.Icon(active = currentMode == option.mode) {
-                                    Icon(
-                                        imageVector        = option.icon,
-                                        contentDescription = null,
-                                        modifier           = Modifier.size(SegmentedButtonDefaults.IconSize)
-                                    )
-                                }
-                            }
-                        ) {
-                            Text(option.label)
-                        }
-                    }
-                }
+                ConnectedChoiceRow(
+                    options = themeOptions,
+                    selected = currentMode,
+                    onSelect = { hf.press(); onModeSelected(it) }
+                )
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // ── AMOLED toggle ─────────────────────────────────────────────────
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(
-                    modifier              = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment     = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment      = Alignment.CenterVertically,
-                        horizontalArrangement  = Arrangement.spacedBy(12.dp),
-                        modifier               = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector        = Icons.Outlined.Contrast,
-                            contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier           = Modifier.size(22.dp)
-                        )
-                        Column {
-                            Text(
-                                text  = "AMOLED Pure Black",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                    Switch(
-                        checked         = amoledBlack,
-                        onCheckedChange = onAmoledBlackChange
-                    )
-                }
-                Text(
-                    text     = "Replaces dark backgrounds with true black — saves battery on OLED screens",
-                    style    = MaterialTheme.typography.bodySmall,
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 34.dp)
-                )
-            }
+            SettingSwitchRow(
+                icon = Icons.Outlined.Contrast,
+                title = "AMOLED Pure Black",
+                subtitle = "True-black backgrounds — saves battery on OLED screens",
+                checked = amoledBlack,
+                onCheckedChange = { hf.toggle(it); onAmoledBlackChange(it) }
+            )
+
+            SettingSwitchRow(
+                icon = Icons.Outlined.Vibration,
+                title = "Haptic Feedback",
+                subtitle = "Subtle vibrations on taps, toggles and scrolling",
+                checked = haptics,
+                onCheckedChange = { hf.toggle(it); onHapticsChange(it) }
+            )
         }
     }
 }
 
-// ── Segmented button data ──────────────────────────────────────────────────────
-
-private enum class ThemeModeOption(
-    val mode: ThemeMode,
-    val label: String,
-    val icon: ImageVector
+@Composable
+private fun SettingSwitchRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
 ) {
-    SYSTEM(ThemeMode.SYSTEM, "Auto",  Icons.Outlined.BrightnessMedium),
-    LIGHT (ThemeMode.LIGHT,  "Light", Icons.Outlined.LightMode),
-    DARK  (ThemeMode.DARK,   "Dark",  Icons.Outlined.DarkMode),
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    icon, null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp)
+                )
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Switch(checked = checked, onCheckedChange = onCheckedChange)
+        }
+        Text(
+            subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 34.dp)
+        )
+    }
 }
 
 // ── Resume Game Dialog ─────────────────────────────────────────────────────────
@@ -344,34 +337,28 @@ private fun ResumeGameDialog(
         onDismissRequest = onDismiss,
         icon = {
             Surface(
-                shape    = MaterialTheme.shapes.large,
-                color    = MaterialTheme.colorScheme.primaryContainer,
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         "10",
-                        style      = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
-                        color      = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
         },
-        title = {
-            Text("Game In Progress", style = MaterialTheme.typography.headlineSmall)
-        },
+        title = { Text("Game In Progress", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Text(
                 "You have an unfinished game. Do you want to continue it or start a new one?",
                 style = MaterialTheme.typography.bodyLarge
             )
         },
-        confirmButton = {
-            Button(onClick = onContinue) { Text("Continue") }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onStartNew) { Text("New Game") }
-        }
+        confirmButton = { Button(onClick = onContinue) { Text("Continue") } },
+        dismissButton = { OutlinedButton(onClick = onStartNew) { Text("New Game") } }
     )
 }

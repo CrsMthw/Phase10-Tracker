@@ -156,6 +156,7 @@ private fun animatedColorScheme(target: ColorScheme): ColorScheme {
 
 // ── Public theme entry-point ───────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Phase10Theme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -204,10 +205,13 @@ fun Phase10Theme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography  = Phase10Typography,
-        shapes      = Phase10Shapes,
-        content     = content
+    // Expressive theme wires MotionScheme.expressive() so every spatial spec
+    // (motionScheme.defaultSpatialSpec) carries the M3 Expressive spring/overshoot.
+    MaterialExpressiveTheme(
+        colorScheme  = colorScheme,
+        typography   = Phase10Typography,
+        shapes       = Phase10Shapes,
+        motionScheme = MotionScheme.expressive(),
+        content      = content
     )
 }

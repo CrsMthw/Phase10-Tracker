@@ -10,29 +10,39 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.crsmthw.phase10tracker.data.model.LeaderboardEntry
 import com.crsmthw.phase10tracker.ui.LeaderboardViewModel
+import com.crsmthw.phase10tracker.ui.components.BottomFadeScrim
+import com.crsmthw.phase10tracker.util.press
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LeaderboardScreen(
     vm: LeaderboardViewModel,
     onBack: () -> Unit
 ) {
     val leaderboard by vm.leaderboard.collectAsState()
+    val hf = LocalHapticFeedback.current
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets(0),
         topBar = {
-            TopAppBar(
+            LargeFlexibleTopAppBar(
                 title = { Text("Leaderboard") },
+                subtitle = { Text("All-time win stats") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { hf.press(); onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
@@ -66,11 +76,13 @@ fun LeaderboardScreen(
                 }
             }
         } else {
+            val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+            Box(Modifier.fillMaxSize().padding(padding)) {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp, end = 16.dp, top = 12.dp, bottom = navBottom + 24.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item {
@@ -85,6 +97,8 @@ fun LeaderboardScreen(
                 itemsIndexed(leaderboard, key = { _, e -> e.playerId }) { index, entry ->
                     LeaderboardCard(entry = entry, rank = index + 1)
                 }
+            }
+                BottomFadeScrim(color = MaterialTheme.colorScheme.background, height = navBottom + 48.dp)
             }
         }
     }

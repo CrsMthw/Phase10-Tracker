@@ -13,15 +13,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.crsmthw.phase10tracker.data.model.PlayerEntity
 import com.crsmthw.phase10tracker.ui.GameSetupViewModel
+import com.crsmthw.phase10tracker.util.confirm
+import com.crsmthw.phase10tracker.util.press
+import com.crsmthw.phase10tracker.util.scrollTick
+import com.crsmthw.phase10tracker.util.threshold
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun GameSetupScreen(
     vm: GameSetupViewModel,
@@ -37,6 +41,7 @@ fun GameSetupScreen(
     var showAddDialog    by remember { mutableStateOf(false) }
     var showRuleDropdown by remember { mutableStateOf(false) }
     val hapticFeedback  = LocalHapticFeedback.current
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     LaunchedEffect(newGameId) {
         newGameId?.let { onGameStarted(it) }
@@ -68,25 +73,29 @@ fun GameSetupScreen(
         if (fromPlayerIndex >= 0 && toPlayerIndex >= 0 &&
             fromPlayerIndex < selectedPlayers.size && toPlayerIndex < selectedPlayers.size) {
             vm.movePlayer(fromPlayerIndex, toPlayerIndex)
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+            hapticFeedback.scrollTick()
         }
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets(0),
         topBar = {
-            TopAppBar(
+            LargeFlexibleTopAppBar(
                 title = { Text("New Game") },
+                subtitle = { Text("Players & phase set") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { hapticFeedback.press(); onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         },
         bottomBar = {
             Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
                 Button(
-                    onClick = { vm.startGame() },
+                    onClick = { hapticFeedback.confirm(); vm.startGame() },
                     enabled = selectedPlayers.size >= 2,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -127,7 +136,7 @@ fun GameSetupScreen(
                     )
                     // Random phase-set picker
                     FilledTonalIconButton(
-                        onClick = { vm.selectRandomPhaseSet() },
+                        onClick = { hapticFeedback.press(); vm.selectRandomPhaseSet() },
                     ) {
                         Icon(
                             Icons.Filled.Casino,
@@ -339,16 +348,8 @@ private fun sh.calvin.reorderable.ReorderableCollectionItemScope.PlayerOrderCard
                 modifier = Modifier
                     .size(40.dp)
                     .draggableHandle(
-                        onDragStarted = {
-                            hapticFeedback.performHapticFeedback(
-                                HapticFeedbackType.GestureThresholdActivate
-                            )
-                        },
-                        onDragStopped = {
-                            hapticFeedback.performHapticFeedback(
-                                HapticFeedbackType.GestureEnd
-                            )
-                        }
+                        onDragStarted = { hapticFeedback.threshold() },
+                        onDragStopped = { hapticFeedback.press() }
                     )
             ) {
                 Icon(

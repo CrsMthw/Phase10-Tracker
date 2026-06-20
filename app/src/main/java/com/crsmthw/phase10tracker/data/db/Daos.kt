@@ -29,6 +29,15 @@ interface PlayerDao {
 
     @Query("UPDATE players SET gamesWon = gamesWon + 1 WHERE id = :id")
     suspend fun incrementGamesWon(id: Long)
+
+    @Query("UPDATE players SET gamesPlayed = CASE WHEN gamesPlayed > 0 THEN gamesPlayed - 1 ELSE 0 END WHERE id IN (:ids)")
+    suspend fun decrementGamesPlayed(ids: List<Long>)
+
+    @Query("UPDATE players SET gamesWon = CASE WHEN gamesWon > 0 THEN gamesWon - 1 ELSE 0 END WHERE id = :id")
+    suspend fun decrementGamesWon(id: Long)
+
+    @Query("UPDATE players SET gamesPlayed = 0, gamesWon = 0")
+    suspend fun resetAllStats()
 }
 
 // ── Game DAO ─────────────────────────────────────────────────────────────────
@@ -48,6 +57,26 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE id = :id")
     fun getGameById(id: Long): Flow<GameEntity?>
 
+    // The latest finished game with a real winner whose results haven't been shown yet.
+    // Lets a completed game still surface its winner screen after a cold launch.
+    @Query("""
+        SELECT * FROM games
+        WHERE isComplete = 1 AND winnerId IS NOT NULL AND winnerId != -1 AND resultsSeen = 0
+        ORDER BY finishedAt DESC LIMIT 1
+    """)
+    fun observePendingResults(): Flow<GameEntity?>
+
+    @Query("UPDATE games SET resultsSeen = 1 WHERE id = :id")
+    suspend fun markResultsSeen(id: Long)
+
+    // Finished games with a real winner (excludes cancelled / all-zero games where winnerId = -1).
+    @Query("""
+        SELECT * FROM games
+        WHERE isComplete = 1 AND winnerId IS NOT NULL AND winnerId != -1
+        ORDER BY finishedAt DESC
+    """)
+    fun getFinishedGames(): Flow<List<GameEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGame(game: GameEntity): Long
 
@@ -58,11 +87,18 @@ interface GameDao {
     suspend fun advanceRound(id: Long, round: Int, dealerIndex: Int)
 
     @Query("""
-        UPDATE games 
-        SET isComplete = 1, finishedAt = :finishedAt, winnerId = :winnerId 
+        UPDATE games
+        SET isComplete = 1, finishedAt = :finishedAt, winnerId = :winnerId, resultsSeen = 0
         WHERE id = :id
     """)
     suspend fun finishGame(id: Long, winnerId: Long, finishedAt: Long = System.currentTimeMillis())
+
+    @Query("DELETE FROM games WHERE id = :id")
+    suspend fun deleteGameById(id: Long)
+
+    // Wipes finished games only — keeps any in-progress (isComplete = 0) game.
+    @Query("DELETE FROM games WHERE isComplete = 1")
+    suspend fun deleteFinishedGames()
 }
 
 // ── GamePlayer DAO ───────────────────────────────────────────────────────────
@@ -87,6 +123,10 @@ interface GamePlayerDao {
 
     @Query("SELECT * FROM game_players WHERE id = :id")
     suspend fun getGamePlayerById(id: Long): GamePlayerEntity?
+
+    // Relabel a player's denormalized name across all games (used when deleting them from the roster).
+    @Query("UPDATE game_players SET playerName = :name WHERE playerId = :playerId")
+    suspend fun relabelPlayer(playerId: Long, name: String)
 }
 
 // ── CustomPhaseSet DAO ───────────────────────────────────────────────────────
@@ -113,8 +153,14 @@ interface RoundDao {
     @Query("SELECT * FROM rounds WHERE gameId = :gameId ORDER BY roundNumber ASC")
     fun getRoundsForGame(gameId: Long): Flow<List<RoundEntity>>
 
+    @Query("SELECT * FROM rounds WHERE gameId = :gameId ORDER BY roundNumber ASC")
+    suspend fun getRoundsForGameList(gameId: Long): List<RoundEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRounds(rounds: List<RoundEntity>)
+
+    @Update
+    suspend fun updateRounds(rounds: List<RoundEntity>)
 
     @Query("SELECT * FROM rounds WHERE gamePlayerId = :gamePlayerId ORDER BY roundNumber ASC")
     suspend fun getRoundsForPlayer(gamePlayerId: Long): List<RoundEntity>

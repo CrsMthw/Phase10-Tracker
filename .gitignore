@@ -27,11 +27,20 @@ render.experimental.xml
 *.jks
 *.keystore
 
+# Release build outputs (signed APKs are attached to Gitea releases, not committed)
+app/release/
+*.idsig
+
 # Google Services (e.g. APIs or Firebase)
 google-services.json
 
 # Android Profiling
 *.hprof
+
+# Claude Code — local dev context, not for GitHub
+CLAUDE.md
+.claude/
+docs/
 
 build/
 local.properties

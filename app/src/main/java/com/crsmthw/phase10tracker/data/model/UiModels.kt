@@ -45,3 +45,32 @@ data class GameResult(
     val finalPhase: Int,
     val isWinner: Boolean
 )
+
+// One finished-game row in the Game History list
+data class GameSummary(
+    val gameId: Long,
+    val finishedAt: Long,
+    val playerNames: List<String>,
+    val winnerName: String,
+    val winnerScore: Int,
+    val isTie: Boolean,
+    val phaseSetName: String,
+    val roundsPlayed: Int
+)
+
+// One editable player line while editing a past round (Round History)
+data class RoundEditEntry(
+    val roundId: Long,
+    val gamePlayerId: Long,
+    val playerName: String,
+    val phaseAtRoundStart: Int,
+    val scoreInput: String,
+    val phaseCompleted: Boolean,
+    val autoCompleted: Boolean = false
+)
+
+// The round currently being edited
+data class RoundDraft(
+    val roundNumber: Int,
+    val entries: List<RoundEditEntry>
+)

@@ -28,24 +28,24 @@ data class GameEntity(
     val currentRound: Int = 1,
     val currentDealerIndex: Int = 0,    // index into the ordered player list
     // -1 = Official Phases, -2..-15 = preset index, positive = custom phase set DB id
-    val phaseSetId: Long = -1L
+    val phaseSetId: Long = -1L,
+    // false once a game finishes until its winner screen has been shown — lets a completed
+    // game still surface its results after a cold launch (Home filters out isComplete games).
+    val resultsSeen: Boolean = true
 )
 
 // ── Per-player state within a game ──────────────────────────────────────────
 
 @Entity(
     tableName = "game_players",
+    // Only the game FK cascades. There is intentionally NO foreign key to players: deleting a
+    // player must NOT wipe their game history — the denormalized playerName is relabelled to
+    // "Deleted Player" instead (see GameRepository.deletePlayer). See MIGRATION_4_5.
     foreignKeys = [
         ForeignKey(
             entity = GameEntity::class,
             parentColumns = ["id"],
             childColumns = ["gameId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = PlayerEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["playerId"],
             onDelete = ForeignKey.CASCADE
         )
     ],

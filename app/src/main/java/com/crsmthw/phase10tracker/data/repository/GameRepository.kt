@@ -19,14 +19,25 @@ class GameRepository(
     suspend fun addPlayer(name: String): Long =
         playerDao.insertPlayer(PlayerEntity(name = name.trim()))
 
-    suspend fun deletePlayer(player: PlayerEntity) =
+    // Deleting a player keeps their game history (relabelled "Deleted Player" via the denormalized
+    // name) and only removes their roster + leaderboard record. game_players has no players FK, so
+    // nothing cascades. See MIGRATION_4_5.
+    suspend fun deletePlayer(player: PlayerEntity) {
+        gamePlayerDao.relabelPlayer(player.id, "Deleted Player")
         playerDao.deletePlayer(player)
+    }
 
     // ── Active Game Check ────────────────────────────────────────────────────
 
     suspend fun getActiveGame(): GameEntity? = gameDao.getActiveGame()
 
     fun observeActiveGame(): Flow<GameEntity?> = gameDao.observeActiveGame()
+
+    // ── Pending results (finished game whose winner screen wasn't shown yet) ───
+
+    fun observePendingResults(): Flow<GameEntity?> = gameDao.observePendingResults()
+
+    suspend fun markResultsSeen(gameId: Long) = gameDao.markResultsSeen(gameId)
 
     // ── Start Game ───────────────────────────────────────────────────────────
 
@@ -172,6 +183,9 @@ class GameRepository(
 
     suspend fun getGameResults(gameId: Long): List<GameResult> {
         val gamePlayers = gamePlayerDao.getGamePlayersList(gameId)
+        // A finished game can lose all its players if they were deleted from the roster
+        // (game_players has ON DELETE CASCADE to players). Guard so maxOf/minOf don't throw.
+        if (gamePlayers.isEmpty()) return emptyList()
         val highestPhase = gamePlayers.maxOf { it.currentPhase }
         val topPlayers = gamePlayers.filter { it.currentPhase == highestPhase }
         val lowestScore = topPlayers.minOf { it.totalScore }
@@ -193,11 +207,111 @@ class GameRepository(
             }
     }
 
+    // ── Round history (rounds of a game) ─────────────────────────────────────
+
+    fun getRoundsForGame(gameId: Long): Flow<List<RoundEntity>> =
+        roundDao.getRoundsForGame(gameId)
+
+    suspend fun getRoundsForGameList(gameId: Long): List<RoundEntity> =
+        roundDao.getRoundsForGameList(gameId)
+
+    // ── Edit a previous round + recompute (active-game-only) ──────────────────
+
+    suspend fun editRound(gameId: Long, updatedRounds: List<RoundEntity>) {
+        roundDao.updateRounds(updatedRounds)
+        recomputeGame(gameId)
+    }
+
+    /**
+     * Rebuilds every player's running phase / total from their full round history (so an edit to an
+     * early round correctly shifts later phases), then completes the game if anyone now passed
+     * Phase 10. Only called for active games, so endGame runs at most once (no stat double-count).
+     */
+    private suspend fun recomputeGame(gameId: Long) {
+        val gamePlayers = gamePlayerDao.getGamePlayersList(gameId)
+        for (gp in gamePlayers) {
+            val rounds = roundDao.getRoundsForPlayer(gp.id)
+            var phase = 1
+            val rebuilt = rounds.map { r ->
+                val withStart = r.copy(phaseAtRoundStart = phase)
+                if (r.phaseCompleted && phase <= 10) phase += 1
+                withStart
+            }
+            if (rebuilt.isNotEmpty()) roundDao.updateRounds(rebuilt)
+            gamePlayerDao.updateGamePlayer(
+                gp.copy(currentPhase = phase, totalScore = rounds.sumOf { it.score })
+            )
+        }
+        val updated = gamePlayerDao.getGamePlayersList(gameId)
+        val finishers = updated.filter { it.currentPhase > 10 }
+        if (finishers.isNotEmpty()) {
+            val winnerScore = finishers.minOf { it.totalScore }
+            val winners = finishers.filter { it.totalScore == winnerScore }.map { it.playerId }
+            endGame(gameId, winners)
+        }
+    }
+
+    // ── Game history (finished games, read-only) ──────────────────────────────
+
+    fun getFinishedGameSummaries(): Flow<List<GameSummary>> =
+        gameDao.getFinishedGames().map { games ->
+            games.mapNotNull { game ->
+                val results = getGameResults(game.id)
+                if (results.isEmpty()) return@mapNotNull null   // players were deleted — skip
+                val winners = results.filter { it.isWinner }
+                GameSummary(
+                    gameId = game.id,
+                    finishedAt = game.finishedAt ?: game.startedAt,
+                    playerNames = results.map { it.playerName },
+                    winnerName = if (winners.size > 1) winners.joinToString(" & ") { it.playerName }
+                                 else winners.firstOrNull()?.playerName ?: "—",
+                    winnerScore = winners.firstOrNull()?.finalScore ?: 0,
+                    isTie = winners.size > 1,
+                    phaseSetName = resolvePhaseSetName(game.phaseSetId),
+                    roundsPlayed = (game.currentRound - 1).coerceAtLeast(0)
+                )
+            }
+        }
+
+    // ── Deleting games (biometric-gated in the UI) ───────────────────────────
+
+    /** Deletes one game and reverses the leaderboard stats it had added (games-played for all,
+     *  games-won for the winner[s]). Cascades remove its rounds + game_players. */
+    suspend fun deleteGame(gameId: Long) {
+        val gps = gamePlayerDao.getGamePlayersList(gameId)
+        if (gps.isNotEmpty()) {
+            val highestPhase = gps.maxOf { it.currentPhase }
+            val top = gps.filter { it.currentPhase == highestPhase }
+            val lowestScore = top.minOf { it.totalScore }
+            val winnerIds = top.filter { it.totalScore == lowestScore }.map { it.playerId }
+            playerDao.decrementGamesPlayed(gps.map { it.playerId })
+            winnerIds.forEach { playerDao.decrementGamesWon(it) }
+        }
+        gameDao.deleteGameById(gameId)
+    }
+
+    /** Clears all finished games (keeps any in-progress game) and resets every player's stats. */
+    suspend fun deleteAllHistoryAndStats() {
+        gameDao.deleteFinishedGames()
+        playerDao.resetAllStats()
+    }
+
+    /** Human-readable name of the phase set a game used (mirrors resolvePhaseRules). */
+    suspend fun resolvePhaseSetName(phaseSetId: Long): String = when {
+        phaseSetId == -1L -> "Official Phases"
+        phaseSetId < -1L  -> {
+            val idx = (-phaseSetId - 2).toInt()
+            PRESET_PHASE_SETS.getOrNull(idx)?.name ?: "Official Phases"
+        }
+        else -> customPhaseSetDao.getPhaseSetById(phaseSetId)?.name ?: "Custom Phases"
+    }
+
     // ── Leaderboard ──────────────────────────────────────────────────────────
 
     fun getLeaderboard(): Flow<List<LeaderboardEntry>> =
         playerDao.getAllPlayers().map { players ->
             players
+                .filter { it.gamesPlayed > 0 }   // hide players with no games (empty after a reset)
                 .map { p ->
                     LeaderboardEntry(
                         playerId = p.id,

@@ -12,8 +12,8 @@ android {
         applicationId = "com.crsmthw.phase10tracker"
         minSdk = 35
         targetSdk = 37
-        versionCode = 7
-        versionName = "3.0.3"
+        versionCode = 12
+        versionName = "4.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -39,6 +39,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true   // exposes BuildConfig.VERSION_NAME (shown on the About screen)
     }
 
     packaging {
@@ -50,7 +51,7 @@ android {
 
 dependencies {
     // Compose BOM — pins all stable Compose versions
-    val composeBom = platform("androidx.compose:compose-bom:2026.04.01")
+    val composeBom = platform("androidx.compose:compose-bom:2026.05.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
@@ -62,9 +63,12 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // Material 3 Expressive — alpha for full M3 Expressive API surface
-    implementation("androidx.compose.material3:material3:1.5.0-alpha19")
+    implementation("androidx.compose.material3:material3:1.5.0-alpha21")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
+
+    // Graphics shapes — MaterialShapes (Cookie / Clover / etc.) for expressive badges & buttons
+    implementation("androidx.graphics:graphics-shapes:1.1.0")
 
     // Adaptive layouts (for foldable / tablet)
     implementation("androidx.compose.material3.adaptive:adaptive:1.2.0")
@@ -73,7 +77,7 @@ dependencies {
 
     // Activity & Window
     implementation("androidx.activity:activity-compose:1.13.0")
-    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.core:core-ktx:1.19.0")
     implementation("androidx.window:window:1.5.1")
 
     // Lifecycle / ViewModel
@@ -83,6 +87,9 @@ dependencies {
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.9.8")
+
+    // Biometric / device-credential auth for destructive deletes
+    implementation("androidx.biometric:biometric:1.4.0-alpha07")
 
     // Room (local DB for persistent state)
     implementation("androidx.room:room-runtime:2.8.4")

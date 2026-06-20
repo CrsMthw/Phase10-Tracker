@@ -37,46 +37,51 @@ Every Phase 10 score tracker app on the Play Store falls into one of a few categ
 - **Flexible game setup** — select any combination of saved players, drag to reorder them before the game starts
 - **Dealer rotation** — automatically tracks who the dealer is each round, based on the player order set at game start
 - **Resume game** — if the app is killed mid-game (RAM cleared, crash, whatever), your game is saved and waiting when you reopen it
-- **End game early** — stop the game at any point; the current leader is declared the winner based on highest phase reached, then lowest score as tiebreaker
+- **End game early** — stop the game at any point; the current leader is declared the winner (highest phase reached, then lowest score as tiebreaker)
 - **Tied winner support** — if two players finish on the same phase with the same score, both are declared winners and both get the win recorded
+- **Guaranteed winner screen** — completing phase 10 always shows the results; even if the app is killed before you see it, the winner reveal is waiting on next launch
 
 ### Scoring
 - **Cumulative scoring** — enter card values left in each player's hand at the end of every round; the app adds them up
-- **Phase tracking** — each player's current phase is tracked automatically; it advances when they complete a phase
-- **Smart phase completion** — if a player's score is 0 (went out) or below 50 (completed phase, few cards left), the "Phase Completed" toggle is checked automatically
-- **Manual override** — the phase completion toggle can be manually checked for edge cases (e.g. a player completes their phase but foolishly holds wild cards, pushing their score above 50)
-- **Card values reference** — tap the ℹ️ button on the round entry screen for a quick reminder of how much each card type is worth (single digits: 5pts, double digits: 10pts, Skip: 15pts, Wild: 25pts)
-- **Correct winner logic** — highest phase reached wins; lowest score breaks ties among players on the same phase
+- **Phase tracking** — each player's current phase advances automatically when they complete a phase
+- **Smart phase completion** — a score of 0 (went out) or any value below 50 auto-checks "Phase Completed"; the toggle can be overridden for the rare high-score-but-completed case
+- **Mistake-proof round entry** — Submit only enables when every score is filled, every score is a multiple of 5, and exactly one player went out (scored 0), with inline hints for anything off
+- **Edit past rounds** — made a mistake three rounds ago? Open Round History from the board, fix any round's scores, and every player's totals and phases are recalculated correctly (with a confirmation summary)
+- **Card values reference** — tap ℹ️ on round entry for a reminder (single digits 5pts, double digits 10pts, Skip 15pts, Wild 25pts)
+
+### History, Stats & Privacy
+- **Game History** — browse every finished game (winner, players, date, rounds, phase set, winning score)
+- **Game Detail** — tap a game for a read-only breakdown: final standings, the exact **date and time** played, and a round-by-round table
+- **Leaderboard** — lifetime stats for every saved player: games played, wins, win percentage, sorted by win %
+- **Delete a game** — remove a single game from history; the leaderboard is corrected automatically (the winner loses that win)
+- **Delete all history & leaderboard** — a one-tap reset that keeps your saved players and any in-progress game
+- **Deletes are biometric-protected** — deleting a game, wiping all history, or removing a player requires your fingerprint / device PIN, so a competitive friend can't quietly erase their losses
+- **History survives roster changes** — deleting a player keeps their past games (shown as "Deleted Player") and only removes their leaderboard record
 
 ### Screens
-
-**Home** — start a new game, resume an in-progress game, or browse the leaderboard
-
-**Game Setup** — pick players from your saved roster, set the phase ruleset, drag cards into play order using the ≡ handle with haptic feedback
-
-**Active Game (Scores tab)** — live scoreboard sorted by highest phase then lowest score. Rank badges for all players. Tap any card to expand the current phase rule. Dealer badge shown inline
-
-**Active Game (By Phase tab)** — players grouped by their current phase, with the phase rule shown as a header above each group
-
-**Round Entry** — full-width score input per player, keyboard-aware layout so fields are never hidden. Phase completion shown as a tappable row below each score field
-
-**Game Results** — winner announcement with animated trophy, tie support, full final standings sorted by phase then score
-
-**Leaderboard** — lifetime stats for every saved player: games played, wins, win percentage. Sorted by win %
-
-**Custom Rules** — create named rule sets with custom phase descriptions. Select them at game setup instead of the official rules. Official rules shown as a reference card
+- **Home** — start / resume a game, Leaderboard, Game History, manage players, custom phases, appearance
+- **Game Setup** — pick players, drag to reorder (≡ handle, with haptics), choose a phase set (or roll a random one)
+- **Active Game** — live scoreboard with rank badges, dealer badge, and a wavy phase-progress bar per player; a Scores / By Phase toggle (single screen) or both side by side (foldable). Tap a card to see the phase rule
+- **Round Entry** — per-player score input with a keyboard-aware layout and a phase-completed toggle
+- **Round History** — edit any previous round's scores
+- **Game Results** — winner reveal with an expressive trophy, tie support, full standings
+- **Game History / Game Detail** — browse and inspect finished games
+- **Leaderboard** — lifetime win stats
+- **Custom Phases** — create named phase sets; official phases + 14 presets shown for reference
+- **About** — credits, links, app version, and the delete-all-data control
 
 ### Adaptive Layout
-- **Foldable support** — on the Samsung Galaxy Z Fold 6 (and any wide-screen device), the Active Game screen shows Scores and By Phase side by side simultaneously
-- **Seamless transition** — folding and unfolding the phone transitions between single and dual pane layouts automatically
-- **Tablet ready** — same dual-pane layout activates on tablets at ≥600dp width
+- **Foldable support** — on the Samsung Galaxy Z Fold 6 (and any wide screen), the Active Game shows Scores and By Phase side by side as two cards
+- **Seamless transition** — folding / unfolding switches between single and dual pane automatically
+- **Tablet ready** — the dual-pane layout activates at ≥ medium width
 
-### Design
-- **Material 3 Expressive** — built on the latest Material You design system
-- **Dynamic color** — app colors are extracted from your wallpaper automatically on Android 12+
-- **Themed icon** — monochrome adaptive icon layer means the app icon adopts your wallpaper palette in themed icon mode
-- **Dark mode** — full dark theme support, follows system setting
-- **Edge to edge** — content renders behind the status and navigation bars properly
+### Design & Feel
+- **Material 3 Expressive** — built exclusively on the latest expressive components (flexible app bars, expressive shapes, connected button groups, wavy indicators) with expressive spring motion
+- **Haptic feedback** — subtle, semantic haptics across taps, toggles, scrolling and confirmations, with a Settings toggle to turn it all off
+- **Dynamic color** — colors extracted from your wallpaper on Android 12+
+- **AMOLED pure black** — optional true-black dark theme
+- **Edge to edge** — transparent status and navigation bars with content fading gracefully underneath
+- **Dark mode** — full dark theme, follows system or forced light/dark
 
 ---
 
@@ -85,14 +90,15 @@ Every Phase 10 score tracker app on the Play Store falls into one of a few categ
 | Layer | Library |
 |---|---|
 | UI | Jetpack Compose |
-| Design system | Material 3 (`material3:1.5.0-alpha19`) |
-| Navigation | Compose Navigation |
-| Database | Room |
+| Design system | Material 3 Expressive (`material3:1.5.0-alpha21`) + `graphics-shapes` |
+| Navigation | Compose Navigation `2.9.8` |
+| Database | Room `2.8.4` |
+| Auth | `androidx.biometric` (for destructive actions) |
 | Reactive state | Kotlin Flow + StateFlow |
 | Architecture | MVVM (ViewModel + Repository) |
 | Drag reorder | `sh.calvin.reorderable` |
 | Adaptive layout | `androidx.compose.material3.adaptive` |
-| Build | AGP 9.2.1, Kotlin 2.3.10, KSP 2.3.8 |
+| Build | AGP 9.2.1, Kotlin 2.3.21, KSP 2.3.8 |
 | Min SDK | 35 (Android 15) |
 | Target SDK | 37 (Android 16) |
 
@@ -104,7 +110,7 @@ Every Phase 10 score tracker app on the Play Store falls into one of a few categ
 
 Tapping this button on your Android device will open Obtainium and automatically add the repo — it'll notify you and install new releases automatically from then on.
 
-Or go to the Releases page and download the latest APK manually.
+Or go to the Releases page and download the latest `Phase10Tracker.apk` manually.
 
 ---
 
@@ -113,10 +119,9 @@ Or go to the Releases page and download the latest APK manually.
 Requirements: Android Studio (latest stable), JDK 17+, Android SDK 37.
 
 ```bash
-git clone https://gitea.crsmthw.com/cris/phase10tracker.git
-cd phase10tracker
-# Open in Android Studio and let Gradle sync
-# Or build from terminal:
+git clone https://git.crsmthw.com/crsmthw/Phase10-Tracker.git
+cd Phase10-Tracker
+# Open in Android Studio and let Gradle sync, or build from terminal:
 ./gradlew assembleDebug
 ```
 

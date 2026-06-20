@@ -20,14 +20,19 @@ object Routes {
     const val GAME_SETUP     = "setup"
     const val ACTIVE_GAME    = "game/{gameId}"
     const val ROUND_ENTRY    = "round/{gameId}"
+    const val ROUND_HISTORY  = "history/{gameId}"
     const val GAME_RESULTS   = "results/{gameId}"
+    const val GAME_HISTORY   = "game_history"
+    const val GAME_DETAIL    = "game_history/{gameId}"
     const val LEADERBOARD    = "leaderboard"
     const val CUSTOM_RULES   = "custom_rules"
     const val ABOUT          = "about"
 
-    fun activeGame(id: Long)  = "game/$id"
-    fun roundEntry(id: Long)  = "round/$id"
-    fun gameResults(id: Long) = "results/$id"
+    fun activeGame(id: Long)   = "game/$id"
+    fun roundEntry(id: Long)   = "round/$id"
+    fun roundHistory(id: Long) = "history/$id"
+    fun gameResults(id: Long)  = "results/$id"
+    fun gameDetail(id: Long)   = "game_history/$id"
 }
 
 // ── Safe navigation helpers ───────────────────────────────────────────────────
@@ -73,15 +78,29 @@ fun Phase10NavHost(
             val vm: HomeViewModel = viewModel(factory = factory)
             val themeMode   by themeVm.themeMode.collectAsState()
             val amoledBlack by themeVm.amoledBlack.collectAsState()
+            val haptics     by themeVm.haptics.collectAsState()
+
+            // A finished game whose winner screen was never shown (e.g. the app was killed before
+            // it appeared) routes straight to results on launch, then clears itself once seen.
+            val pendingResultsId by vm.pendingResultsGameId.collectAsState()
+            LaunchedEffect(pendingResultsId) {
+                pendingResultsId?.let { id ->
+                    navController.navigate(Routes.gameResults(id)) { launchSingleTop = true }
+                }
+            }
+
             HomeScreen(
                 vm                  = vm,
                 themeMode           = themeMode,
                 amoledBlack         = amoledBlack,
+                haptics             = haptics,
                 onThemeModeChange   = themeVm::setThemeMode,
                 onAmoledBlackChange = themeVm::setAmoledBlack,
+                onHapticsChange     = themeVm::setHaptics,
                 onContinueGame      = { gameId -> navController.navigateSafe(Routes.activeGame(gameId)) },
                 onStartNew          = { navController.navigateSafe(Routes.GAME_SETUP) },
                 onLeaderboard       = { navController.navigateSafe(Routes.LEADERBOARD) },
+                onGameHistory       = { navController.navigateSafe(Routes.GAME_HISTORY) },
                 onManagePlayers     = { navController.navigateSafe(Routes.PLAYER_ROSTER) },
                 onCustomRules       = { navController.navigateSafe(Routes.CUSTOM_RULES) },
                 onAbout             = { navController.navigateSafe(Routes.ABOUT) }
@@ -119,13 +138,20 @@ fun Phase10NavHost(
             ActiveGameScreen(
                 vm              = vm,
                 onEnterRound    = { navController.navigateSafe(Routes.roundEntry(gameId)) },
+                onHistory       = { navController.navigateSafe(Routes.roundHistory(gameId)) },
+                // These two are state-driven (fired from the persisted game outcome), not taps, so
+                // they must NOT go through the RESUMED-gated navigateSafe — that gate silently drops
+                // the call when it fires mid-transition (the original "winner screen never showed"
+                // bug). launchSingleTop + popUpTo dedupe instead.
                 onGameEnd       = {
-                    navController.navigateSafe(Routes.gameResults(gameId)) {
+                    navController.navigate(Routes.gameResults(gameId)) {
+                        launchSingleTop = true
                         popUpTo(Routes.HOME)
                     }
                 },
                 onGameCancelled = {
-                    navController.navigateSafe(Routes.HOME) {
+                    navController.navigate(Routes.HOME) {
+                        launchSingleTop = true
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
                 },
@@ -145,6 +171,35 @@ fun Phase10NavHost(
                 onRoundSubmitted = { navController.popSafe() },
                 onBack           = { navController.popSafe() }
             )
+        }
+
+        composable(
+            route     = Routes.ROUND_HISTORY,
+            arguments = listOf(navArgument("gameId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val gameId      = backStackEntry.arguments!!.getLong("gameId")
+            val gameFactory = remember { ViewModelFactory(repo, gameId) }
+            val vm: RoundHistoryViewModel = viewModel(factory = gameFactory)
+            RoundHistoryScreen(vm = vm, onBack = { navController.popSafe() })
+        }
+
+        composable(Routes.GAME_HISTORY) {
+            val vm: GameHistoryViewModel = viewModel(factory = factory)
+            GameHistoryScreen(
+                vm         = vm,
+                onOpenGame = { id -> navController.navigateSafe(Routes.gameDetail(id)) },
+                onBack     = { navController.popSafe() }
+            )
+        }
+
+        composable(
+            route     = Routes.GAME_DETAIL,
+            arguments = listOf(navArgument("gameId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val gameId      = backStackEntry.arguments!!.getLong("gameId")
+            val gameFactory = remember { ViewModelFactory(repo, gameId) }
+            val vm: GameDetailViewModel = viewModel(factory = gameFactory)
+            GameDetailScreen(vm = vm, onBack = { navController.popSafe() })
         }
 
         composable(
@@ -181,7 +236,11 @@ fun Phase10NavHost(
         }
 
         composable(Routes.ABOUT) {
-            AboutScreen(onBack = { navController.popSafe() })
+            val vm: AboutViewModel = viewModel(factory = factory)
+            AboutScreen(
+                onDeleteAll = vm::deleteAllHistoryAndStats,
+                onBack = { navController.popSafe() }
+            )
         }
     }
 }

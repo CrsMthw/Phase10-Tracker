@@ -1,6 +1,6 @@
 package com.crsmthw.phase10tracker.ui.screens
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -11,46 +11,38 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.crsmthw.phase10tracker.data.model.GameResult
 import com.crsmthw.phase10tracker.ui.GameResultsViewModel
+import com.crsmthw.phase10tracker.util.confirm
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun GameResultsScreen(
     vm: GameResultsViewModel,
     onHome: () -> Unit
 ) {
     val results by vm.results.collectAsState()
-
-    // Pulse animation for the trophy
-    val infiniteTransition = rememberInfiniteTransition(label = "trophy")
-    val trophyScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue  = 1.12f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(900, easing = EaseInOutCubic),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "trophyScale"
-    )
+    val hf = LocalHapticFeedback.current
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text("Game Over") },
                 navigationIcon = {
-                    IconButton(onClick = onHome) {
+                    IconButton(onClick = { hf.confirm(); onHome() }) {
                         Icon(Icons.Filled.Home, "Home")
                     }
-                }
-            )
+                }            )
         },
         bottomBar = {
             Surface(tonalElevation = 3.dp) {
                 Button(
-                    onClick = onHome,
+                    onClick = { hf.confirm(); onHome() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -66,59 +58,23 @@ fun GameResultsScreen(
             }
         }
     ) { padding ->
+        if (results.isEmpty()) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                ContainedLoadingIndicator()
+            }
+            return@Scaffold
+        }
+
         val winners = results.filter { it.isWinner }
         val isTie = winners.size > 1
 
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Winner hero block
-            item {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.EmojiEvents,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(96.dp)
-                            .scale(trophyScale),
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Text(
-                        if (isTie) "It's a Tie!" else "Champion!",
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(Modifier.height(4.dp))
-
-                    Text(
-                        if (isTie) winners.joinToString(" & ") { it.playerName }
-                        else winners.firstOrNull()?.playerName ?: "",
-                        style = MaterialTheme.typography.headlineLarge,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(Modifier.height(4.dp))
-
-                    Text(
-                        "Final score: ${winners.firstOrNull()?.finalScore ?: "-"}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            item { WinnerHero(isTie = isTie, winners = winners) }
 
             item {
                 HorizontalDivider()
@@ -139,6 +95,61 @@ fun GameResultsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun WinnerHero(isTie: Boolean, winners: List<GameResult>) {
+    // Expressive spring scale-in for the trophy badge (motionScheme overshoot).
+    val springSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    val scale = remember { Animatable(0.6f) }
+    LaunchedEffect(Unit) { scale.animateTo(1f, springSpec) }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+    ) {
+        Surface(
+            shape = MaterialShapes.Clover4Leaf.toShape(),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.size(128.dp).scale(scale.value)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Filled.EmojiEvents,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(64.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            if (isTie) "It's a Tie!" else "Champion!",
+            style = MaterialTheme.typography.displaySmall,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            if (isTie) winners.joinToString(" & ") { it.playerName }
+            else winners.firstOrNull()?.playerName ?: "",
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            "Final score: ${winners.firstOrNull()?.finalScore ?: "-"}",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
 @Composable
 private fun ResultCard(result: GameResult, rank: Int) {
     Card(
@@ -152,21 +163,15 @@ private fun ResultCard(result: GameResult, rank: Int) {
         )
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Rank / trophy icon
-            Box(
-                modifier = Modifier.size(44.dp),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                 if (result.isWinner) {
                     Icon(
                         Icons.Filled.EmojiEvents,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(36.dp)
                     )
                 } else {
@@ -176,7 +181,7 @@ private fun ResultCard(result: GameResult, rank: Int) {
                         modifier = Modifier.size(36.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text("$rank", style = MaterialTheme.typography.titleSmall)
+                            Text("$rank", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -193,10 +198,7 @@ private fun ResultCard(result: GameResult, rank: Int) {
                 )
             }
 
-            Text(
-                "${result.finalScore} pts",
-                style = MaterialTheme.typography.titleMedium
-            )
+            Text("${result.finalScore} pts", style = MaterialTheme.typography.titleMedium)
         }
     }
 }

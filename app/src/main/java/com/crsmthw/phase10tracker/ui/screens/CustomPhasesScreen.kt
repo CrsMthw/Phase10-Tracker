@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -21,14 +23,20 @@ import com.crsmthw.phase10tracker.data.model.PhaseRule
 import com.crsmthw.phase10tracker.data.model.PRESET_PHASE_SETS
 import com.crsmthw.phase10tracker.data.model.PresetPhaseSet
 import com.crsmthw.phase10tracker.ui.CustomPhasesViewModel
+import com.crsmthw.phase10tracker.ui.components.BottomFadeScrim
+import com.crsmthw.phase10tracker.util.confirm
+import com.crsmthw.phase10tracker.util.press
+import com.crsmthw.phase10tracker.util.reject
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CustomPhasesScreen(
     vm: CustomPhasesViewModel,
     onBack: () -> Unit
 ) {
     val ruleSets by vm.customPhaseSets.collectAsState()
+    val hf = LocalHapticFeedback.current
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showCreateSheet by remember { mutableStateOf(false) }
     var ruleSetToDelete by remember { mutableStateOf<CustomPhaseSet?>(null) }
 
@@ -40,7 +48,7 @@ fun CustomPhasesScreen(
             text = { Text("This phase set will be permanently deleted.") },
             confirmButton = {
                 Button(
-                    onClick = { vm.deletePhaseSet(rs); ruleSetToDelete = null },
+                    onClick = { hf.reject(); vm.deletePhaseSet(rs); ruleSetToDelete = null },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) { Text("Delete") }
             },
@@ -61,29 +69,36 @@ fun CustomPhasesScreen(
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets(0),
         topBar = {
-            TopAppBar(
+            LargeFlexibleTopAppBar(
                 title = { Text("Custom Phases") },
+                subtitle = { Text("Build your own phase sets") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { hf.press(); onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { showCreateSheet = true },
+                onClick = { hf.confirm(); showCreateSheet = true },
                 icon = { Icon(Icons.Filled.Add, null) },
-                text = { Text("New Phase Set") }
+                text = { Text("New Phase Set") },
+                modifier = Modifier.navigationBarsPadding()
             )
         }
     ) { padding ->
+        val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        Box(Modifier.fillMaxSize().padding(padding)) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp, end = 16.dp, top = 16.dp, bottom = navBottom + 16.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Official rules reference card
@@ -179,6 +194,8 @@ fun CustomPhasesScreen(
             }
 
             item { Spacer(Modifier.height(80.dp)) }
+        }
+            BottomFadeScrim(color = MaterialTheme.colorScheme.background, height = navBottom + 48.dp)
         }
     }
 }

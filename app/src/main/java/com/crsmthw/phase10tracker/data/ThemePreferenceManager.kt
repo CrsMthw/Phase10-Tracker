@@ -21,6 +21,7 @@ class ThemePreferenceManager(private val context: Context) {
     companion object {
         private val KEY_THEME_MODE  = intPreferencesKey("theme_mode")
         private val KEY_AMOLED      = booleanPreferencesKey("amoled_black")
+        private val KEY_HAPTICS     = booleanPreferencesKey("haptics_enabled")
     }
 
     /** Emits the saved ThemeMode; defaults to SYSTEM on first run. */
@@ -37,6 +38,11 @@ class ThemePreferenceManager(private val context: Context) {
         prefs[KEY_AMOLED] ?: false
     }
 
+    /** Emits whether haptic feedback is enabled; defaults to true. */
+    val haptics: Flow<Boolean> = context.themeDataStore.data.map { prefs ->
+        prefs[KEY_HAPTICS] ?: true
+    }
+
     suspend fun setThemeMode(mode: ThemeMode) {
         context.themeDataStore.edit { prefs ->
             prefs[KEY_THEME_MODE] = when (mode) {
@@ -50,6 +56,12 @@ class ThemePreferenceManager(private val context: Context) {
     suspend fun setAmoledBlack(enabled: Boolean) {
         context.themeDataStore.edit { prefs ->
             prefs[KEY_AMOLED] = enabled
+        }
+    }
+
+    suspend fun setHaptics(enabled: Boolean) {
+        context.themeDataStore.edit { prefs ->
+            prefs[KEY_HAPTICS] = enabled
         }
     }
 }

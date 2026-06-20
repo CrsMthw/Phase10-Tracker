@@ -15,19 +15,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.crsmthw.phase10tracker.data.model.PlayerEntity
 import com.crsmthw.phase10tracker.ui.PlayerRosterViewModel
+import com.crsmthw.phase10tracker.ui.components.BottomFadeScrim
+import com.crsmthw.phase10tracker.ui.components.PlayerAvatar
+import com.crsmthw.phase10tracker.util.BiometricAuth
+import com.crsmthw.phase10tracker.util.confirm
+import com.crsmthw.phase10tracker.util.findFragmentActivity
+import com.crsmthw.phase10tracker.util.press
+import com.crsmthw.phase10tracker.util.reject
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlayerRosterScreen(
     vm: PlayerRosterViewModel,
     onBack: () -> Unit
 ) {
     val players by vm.players.collectAsState()
+    val hf = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showAddDialog by remember { mutableStateOf(false) }
     var playerToDelete by remember { mutableStateOf<PlayerEntity?>(null) }
 
@@ -46,10 +59,24 @@ fun PlayerRosterScreen(
             onDismissRequest = { playerToDelete = null },
             icon = { Icon(Icons.Filled.PersonRemove, contentDescription = null) },
             title = { Text("Remove Player?") },
-            text = { Text("Remove ${p.name} from your saved players? This won't affect game history.") },
+            text = {
+                Text(
+                    "Remove ${p.name}? They'll show as \"Deleted Player\" in past games, and their " +
+                        "leaderboard record is removed."
+                )
+            },
             confirmButton = {
                 Button(
-                    onClick = { vm.deletePlayer(p); playerToDelete = null },
+                    onClick = {
+                        hf.reject()
+                        playerToDelete = null
+                        BiometricAuth.authenticate(
+                            activity = context.findFragmentActivity(),
+                            title = "Remove player",
+                            subtitle = "Authenticate to remove ${p.name}",
+                            onSuccess = { vm.deletePlayer(p) }
+                        )
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     )
@@ -62,21 +89,26 @@ fun PlayerRosterScreen(
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets(0),
         topBar = {
-            TopAppBar(
+            LargeFlexibleTopAppBar(
                 title = { Text("Saved Players") },
+                subtitle = { Text("Your crew & their stats") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { hf.press(); onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { showAddDialog = true },
+                onClick = { hf.confirm(); showAddDialog = true },
                 icon = { Icon(Icons.Outlined.PersonAdd, null) },
-                text = { Text("Add Player") }
+                text = { Text("Add Player") },
+                modifier = Modifier.navigationBarsPadding()
             )
         }
     ) { padding ->
@@ -108,11 +140,13 @@ fun PlayerRosterScreen(
                 }
             }
         } else {
+            val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+            Box(Modifier.fillMaxSize().padding(padding)) {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp, end = 16.dp, top = 8.dp, bottom = navBottom + 8.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(players, key = { it.id }) { player ->
@@ -122,6 +156,8 @@ fun PlayerRosterScreen(
                     )
                 }
                 item { Spacer(Modifier.height(80.dp)) } // FAB clearance
+            }
+                BottomFadeScrim(color = MaterialTheme.colorScheme.background, height = navBottom + 48.dp)
             }
         }
     }
@@ -145,19 +181,7 @@ private fun PlayerRosterCard(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(42.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = player.name.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
+            PlayerAvatar(name = player.name, size = 42.dp)
 
             Spacer(Modifier.width(16.dp))
 

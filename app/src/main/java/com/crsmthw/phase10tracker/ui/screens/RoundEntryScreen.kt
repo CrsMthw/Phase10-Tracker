@@ -14,12 +14,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.crsmthw.phase10tracker.data.model.PhaseRule
 import com.crsmthw.phase10tracker.data.model.RoundEntry
 import com.crsmthw.phase10tracker.ui.RoundEntryViewModel
+import com.crsmthw.phase10tracker.ui.isScoreShapeInvalid
+import com.crsmthw.phase10tracker.ui.components.CappedModalBottomSheet
+import com.crsmthw.phase10tracker.ui.components.PlayerAvatar
+import com.crsmthw.phase10tracker.util.confirm
+import com.crsmthw.phase10tracker.util.press
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,42 +39,43 @@ fun RoundEntryScreen(
     val gameState  by vm.gameState.collectAsState()
     val submitted  by vm.submitted.collectAsState()
     val phaseRules by vm.phaseRules.collectAsState()
+    val canSubmit  by vm.canSubmit.collectAsState()
     val focusManager = LocalFocusManager.current
+    val hf = LocalHapticFeedback.current
     var showCardValues by remember { mutableStateOf(false) }
 
-    LaunchedEffect(submitted) {
-        if (submitted) onRoundSubmitted()
-    }
+    LaunchedEffect(submitted) { if (submitted) onRoundSubmitted() }
 
     if (showCardValues) {
-        CardValuesDialog(onDismiss = { showCardValues = false })
+        CardValuesSheet(onDismiss = { showCardValues = false })
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text("Round ${gameState?.currentRound ?: ""}") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { hf.press(); onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showCardValues = true }) {
+                    IconButton(onClick = { hf.press(); showCardValues = true }) {
                         Icon(Icons.Filled.Info, contentDescription = "Card point values")
                     }
-                }
-            )
+                }            )
         },
         bottomBar = {
             Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
                 Column(modifier = Modifier.navigationBarsPadding()) {
                     Button(
                         onClick = {
+                            hf.confirm()
                             focusManager.clearFocus()
                             vm.submitRound()
                         },
-                        enabled = vm.isValid(),
+                        enabled = canSubmit,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
@@ -87,10 +95,6 @@ fun RoundEntryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                // Tell Compose the Scaffold padding already consumed those insets,
-                // so imePadding() only adds the *extra* keyboard space — not the
-                // full keyboard height on top of the already-padded bottomBar height.
-                // Without this, the gap = bottomBar height (the double-count).
                 .consumeWindowInsets(padding)
                 .imePadding(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -111,7 +115,7 @@ fun RoundEntryScreen(
                     phaseRules = phaseRules,
                     isLast = entry == entries.last(),
                     onScoreChange = { vm.updateScore(entry.gamePlayerId, it) },
-                    onTogglePhase = { vm.togglePhaseCompleted(entry.gamePlayerId) },
+                    onTogglePhase = { hf.press(); vm.togglePhaseCompleted(entry.gamePlayerId) },
                     onNext = { focusManager.moveFocus(FocusDirection.Down) },
                     onDone = { focusManager.clearFocus() }
                 )
@@ -140,29 +144,11 @@ private fun RoundEntryCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            entry.playerName.take(1).uppercase(),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                PlayerAvatar(name = entry.playerName, size = 40.dp)
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(entry.playerName, style = MaterialTheme.typography.titleMedium)
@@ -176,38 +162,32 @@ private fun RoundEntryCard(
 
             Spacer(Modifier.height(14.dp))
 
-            // Score field — full width now
             OutlinedTextField(
                 value = entry.scoreInput,
-                onValueChange = { input ->
-                    if (input.all { it.isDigit() }) onScoreChange(input)
-                },
+                onValueChange = { input -> if (input.all { it.isDigit() }) onScoreChange(input) },
                 label = { Text("Score") },
                 placeholder = { Text("0") },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = if (isLast) ImeAction.Done else ImeAction.Next
                 ),
-                keyboardActions = KeyboardActions(
-                    onNext = { onNext() },
-                    onDone = { onDone() }
-                ),
+                keyboardActions = KeyboardActions(onNext = { onNext() }, onDone = { onDone() }),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 supportingText = {
                     when {
-                        scoreInt == 0 ->
-                            Text("🏆 Went out!", color = MaterialTheme.colorScheme.primary)
-                        entry.autoCompleted ->
-                            Text("✓ Phase auto-completed", color = MaterialTheme.colorScheme.tertiary)
+                        isScoreShapeInvalid(entry.scoreInput) ->
+                            Text("Must be a multiple of 5", color = MaterialTheme.colorScheme.error)
+                        scoreInt == 0 -> Text("🏆 Went out!", color = MaterialTheme.colorScheme.primary)
+                        entry.autoCompleted -> Text("✓ Phase auto-completed", color = MaterialTheme.colorScheme.tertiary)
                         else -> {}
                     }
                 },
-                isError = entry.scoreInput.isNotEmpty() && scoreInt == null
+                isError = (entry.scoreInput.isNotEmpty() && scoreInt == null) ||
+                    isScoreShapeInvalid(entry.scoreInput)
             )
 
-            // Phase Done — full-width tappable row below the score field
             Surface(
                 onClick = { if (!entry.autoCompleted) onTogglePhase() },
                 shape = MaterialTheme.shapes.large,
@@ -218,16 +198,12 @@ private fun RoundEntryCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
                         checked = entry.phaseCompleted,
-                        onCheckedChange = {
-                            if (!entry.autoCompleted) onTogglePhase()
-                        },
+                        onCheckedChange = { if (!entry.autoCompleted) onTogglePhase() },
                         enabled = !entry.autoCompleted
                     )
                     Spacer(Modifier.width(4.dp))
@@ -250,66 +226,62 @@ private fun RoundEntryCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CardValuesDialog(onDismiss: () -> Unit) {
+private fun CardValuesSheet(onDismiss: () -> Unit) {
     val cardValues = listOf(
-        Triple("1 – 9",     "Single digit cards", "5 pts each"),
-        Triple("10, 11, 12","Double digit cards",  "10 pts each"),
-        Triple("Skip",      "Skip card",           "15 pts each"),
-        Triple("Wild",      "Wild card",            "25 pts each"),
+        Triple("1 – 9", "Single digit cards", "5 pts each"),
+        Triple("10, 11, 12", "Double digit cards", "10 pts each"),
+        Triple("Skip", "Skip card", "15 pts each"),
+        Triple("Wild", "Wild card", "25 pts each"),
     )
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Filled.Info, contentDescription = null) },
-        title = { Text("Card Point Values") },
-        text = {
-            Column {
-                Text(
-                    "Points are based on the cards left in your hand at the end of each round.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(16.dp))
-                cardValues.forEachIndexed { index, (cards, label, points) ->
-                    if (index > 0) HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+    CappedModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(Icons.Filled.Info, null, tint = MaterialTheme.colorScheme.primary)
+                Text("Card Point Values", style = MaterialTheme.typography.titleLarge)
+            }
+            Text(
+                "Points are based on the cards left in your hand at the end of each round.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            cardValues.forEachIndexed { index, (cards, label, points) ->
+                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.width(80.dp)
                     ) {
-                        Surface(
-                            shape = MaterialTheme.shapes.small,
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            modifier = Modifier.width(72.dp)
-                        ) {
-                            Text(
-                                text = cards,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
                         Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = points,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary
+                            cards,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
+                    Spacer(Modifier.width(12.dp))
+                    Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Text(
+                        points,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Got it") }
         }
-    )
+    }
 }
